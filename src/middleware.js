@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 
+export const config = {
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+};
+
 const middleware = (req) => {
+  console.log('[Middleware START]', req.nextUrl.pathname);
   const appUrl = process.env.APP_URL || 'http://localhost:3000';
   const { host } = new URL(appUrl);
   const url = req.nextUrl.clone();
