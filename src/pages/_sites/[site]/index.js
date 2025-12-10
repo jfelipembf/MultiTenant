@@ -64,16 +64,23 @@ export const getStaticPaths = async () => {
 
 export const getStaticProps = async ({ params }) => {
   const { site } = params;
-  const siteWorkspace = await getSiteWorkspace(site, site.includes('.'));
   let workspace = null;
 
-  if (siteWorkspace) {
-    const { host } = new URL(process.env.APP_URL);
-    workspace = {
-      domains: siteWorkspace.domains,
-      name: siteWorkspace.name,
-      hostname: `${siteWorkspace.slug}.${host}`,
-    };
+  try {
+    const siteWorkspace = await getSiteWorkspace(site, site.includes('.'));
+
+    if (siteWorkspace) {
+      const { host } = new URL(process.env.APP_URL);
+      workspace = {
+        domains: siteWorkspace.domains,
+        name: siteWorkspace.name,
+        hostname: `${siteWorkspace.slug}.${host}`,
+      };
+    }
+  } catch (error) {
+    // Durante o build, o banco pode não estar acessível
+    // Retorna workspace null e a página mostrará 404
+    console.error('Erro ao buscar workspace:', error.message);
   }
 
   return {
