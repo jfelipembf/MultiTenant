@@ -17,8 +17,8 @@ const middleware = (req) => {
   }
 
   if (!pathname.includes('.') && !pathname.startsWith('/api')) {
-    // Considera como domínio principal: o host configurado OU domínios da Vercel
-    const isMainDomain = hostname === host || hostname.includes('vercel.app');
+    // Considera como domínio principal: o host configurado, domínios da Vercel ou localhost
+    const isMainDomain = hostname === host || hostname.includes('vercel.app') || hostname.includes('localhost');
 
     if (isMainDomain) {
       url.pathname = `${pathname}`;
