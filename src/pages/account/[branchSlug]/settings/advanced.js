@@ -9,26 +9,24 @@ import Card from '@/components/Card/index';
 import Content from '@/components/Content/index';
 import { AccountLayout } from '@/layouts/index';
 import api from '@/lib/common/api';
-import { useWorkspace } from '@/providers/workspace';
+import { useBranch } from '@/providers/branch';
 import { getSession } from 'next-auth/react';
-import { getWorkspace, isWorkspaceCreator } from '@/prisma/services/workspace';
-import { useTranslation } from "react-i18next";
+import { getBranch, isBranchCreator } from '@/prisma/services/branch';
 
 const Advanced = ({ isCreator }) => {
-  const { setWorkspace, workspace } = useWorkspace();
-  const { t } = useTranslation();
+  const { setBranch, branch } = useBranch();
   const router = useRouter();
   const [isSubmitting, setSubmittingState] = useState(false);
   const [showModal, setModalState] = useState(false);
-  const [verifyWorkspace, setVerifyWorkspace] = useState('');
-  const verifiedWorkspace = verifyWorkspace === workspace?.slug;
+  const [verifyBranch, setVerifyBranch] = useState('');
+  const verifiedBranch = verifyBranch === branch?.slug;
 
-  const handleVerifyWorkspaceChange = (event) =>
-    setVerifyWorkspace(event.target.value);
+  const handleVerifyBranchChange = (event) =>
+    setVerifyBranch(event.target.value);
 
-  const deleteWorkspace = () => {
+  const deleteBranch = () => {
     setSubmittingState(true);
-    api(`/api/workspace/${workspace.slug}`, {
+    api(`/api/branch/${branch.slug}`, {
       method: 'DELETE',
     }).then((response) => {
       setSubmittingState(false);
@@ -39,37 +37,37 @@ const Advanced = ({ isCreator }) => {
         );
       } else {
         toggleModal();
-        setWorkspace(null);
+        setBranch(null);
         router.replace('/account');
-        toast.success('Workspace has been deleted!');
+        toast.success('Academia excluída com sucesso!');
       }
     });
   };
 
   const toggleModal = () => {
-    setVerifyWorkspace('');
+    setVerifyBranch('');
     setModalState(!showModal);
   };
 
   return (
     <AccountLayout>
-      <Meta title={`Nextacular - ${workspace?.name} | Advanced Settings`} />
+      <Meta title={`Painel Swim - ${branch?.name} | Configurações Avançadas`} />
       <Content.Title
-        title={t("settings.workspace.advanced")}
-        subtitle={t("settings.workspace.manage.label")}
+        title="Configurações Avançadas"
+        subtitle="Gerencie as configurações da academia"
       />
       <Content.Divider />
       <Content.Container>
         <Card danger>
           <Card.Body
-            title={t("settings.workspace.delete")}
-            subtitle={t("settings.workspace.delete.message")}
+            title="Excluir Academia"
+            subtitle="A academia será excluída permanentemente, incluindo todo o conteúdo. Esta ação é irreversível."
           />
           <Card.Footer>
             <small className={[isCreator && 'text-red-600']}>
               {isCreator
-                ? t("setting.workspace.delete.warning.message")
-                : t("settings.workspace.delete.contact.message")}
+                ? 'Esta ação não pode ser desfeita. Por favor, tenha certeza.'
+                : 'Entre em contato com o criador da academia para excluí-la.'}
             </small>
             {isCreator && (
               <Button
@@ -77,46 +75,45 @@ const Advanced = ({ isCreator }) => {
                 disabled={isSubmitting}
                 onClick={toggleModal}
               >
-                {isSubmitting ? 'Deleting' : 'Delete'}
+                {isSubmitting ? 'Excluindo...' : 'Excluir'}
               </Button>
             )}
           </Card.Footer>
           <Modal
             show={showModal}
-            title="Deactivate Workspace"
+            title="Excluir Academia"
             toggle={toggleModal}
           >
             <p className="flex flex-col">
               <span>
-                {t("settings.workspace.delete.data.warning")}
+                Sua academia será excluída, junto com todo o seu conteúdo.
               </span>
               <span>
-                Data associated with this workspace can&apos;t be accessed by
-                team members.
+                Os dados associados a esta academia não poderão ser acessados pelos membros da equipe.
               </span>
             </p>
             <p className="px-3 py-2 text-red-600 border border-red-600 rounded">
-              <strong>Warning:</strong> {t("settings.workspace.delete.final.message")}
+              <strong>Atenção:</strong> Esta ação não pode ser desfeita. Por favor, tenha certeza.
             </p>
             <div className="flex flex-col">
               <label className="text-sm text-gray-400">
-                Enter <strong>{workspace?.slug}</strong> to continue:
+                Digite <strong>{branch?.slug}</strong> para continuar:
               </label>
               <input
                 className="px-3 py-2 border rounded"
                 disabled={isSubmitting}
-                onChange={handleVerifyWorkspaceChange}
-                type="email"
-                value={verifyWorkspace}
+                onChange={handleVerifyBranchChange}
+                type="text"
+                value={verifyBranch}
               />
             </div>
             <div className="flex flex-col items-stretch">
               <Button
                 className="text-white bg-red-600 hover:bg-red-500"
-                disabled={!verifiedWorkspace || isSubmitting}
-                onClick={deleteWorkspace}
+                disabled={!verifiedBranch || isSubmitting}
+                onClick={deleteBranch}
               >
-                <span>{t("settings.workspace.delete")}</span>
+                <span>Excluir Academia</span>
               </Button>
             </div>
           </Modal>
@@ -131,12 +128,14 @@ export const getServerSideProps = async (context) => {
   let isCreator = false;
 
   if (session) {
-    const workspace = await getWorkspace(
+    const branch = await getBranch(
       session.user.userId,
       session.user.email,
-      context.params.workspaceSlug
+      context.params.branchSlug
     );
-    isCreator = isWorkspaceCreator(session.user.userId, workspace.creatorId);
+    if (branch) {
+      isCreator = isBranchCreator(session.user.userId, branch.creatorId);
+    }
   }
 
   return { props: { isCreator } };

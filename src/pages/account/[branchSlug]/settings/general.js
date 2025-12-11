@@ -13,28 +13,26 @@ import Content from '@/components/Content/index';
 import Meta from '@/components/Meta/index';
 import { AccountLayout } from '@/layouts/index';
 import api from '@/lib/common/api';
-import { useWorkspace } from '@/providers/workspace';
-import { getWorkspace, isWorkspaceOwner } from '@/prisma/services/workspace';
-import { useTranslation } from "react-i18next";
+import { useBranch } from '@/providers/branch';
+import { getBranch, isBranchOwner } from '@/prisma/services/branch';
 
-const General = ({ isTeamOwner, workspace }) => {
+const General = ({ isTeamOwner, branch }) => {
   const router = useRouter();
-  const { setWorkspace } = useWorkspace();
-  const { t } = useTranslation();
+  const { setBranch } = useBranch();
   const [isSubmitting, setSubmittingState] = useState(false);
-  const [name, setName] = useState(workspace.name || '');
-  const [slug, setSlug] = useState(workspace.slug || '');
-  const validName = name.length > 0 && name.length <= 16;
+  const [name, setName] = useState(branch?.name || '');
+  const [slug, setSlug] = useState(branch?.slug || '');
+  const validName = name.length > 0 && name.length <= 50;
   const validSlug =
     slug.length > 0 &&
-    slug.length <= 16 &&
+    slug.length <= 50 &&
     isSlug(slug) &&
     isAlphanumeric(slug, undefined, { ignore: '-' });
 
   const changeName = (event) => {
     event.preventDefault();
     setSubmittingState(true);
-    api(`/api/workspace/${workspace.slug}/name`, {
+    api(`/api/branch/${branch.slug}/name`, {
       body: { name },
       method: 'PUT',
     }).then((response) => {
@@ -45,7 +43,7 @@ const General = ({ isTeamOwner, workspace }) => {
           toast.error(response.errors[error].msg)
         );
       } else {
-        toast.success('Workspace name successfully updated!');
+        toast.success('Nome atualizado com sucesso!');
       }
     });
   };
@@ -53,49 +51,53 @@ const General = ({ isTeamOwner, workspace }) => {
   const changeSlug = (event) => {
     event.preventDefault();
     setSubmittingState(true);
-    api(`/api/workspace/${workspace.slug}/slug`, {
+    api(`/api/branch/${branch.slug}/slug`, {
       body: { slug },
       method: 'PUT',
     }).then((response) => {
       setSubmittingState(false);
-      const slug = response?.data?.slug;
+      const newSlug = response?.data?.slug;
 
       if (response.errors) {
         Object.keys(response.errors).forEach((error) =>
           toast.error(response.errors[error].msg)
         );
       } else {
-        toast.success('Workspace slug successfully updated!');
-        router.replace(`/account/${slug}/settings/general`);
+        toast.success('Slug atualizado com sucesso!');
+        router.replace(`/account/${newSlug}/settings/general`);
       }
     });
   };
 
-  const copyToClipboard = () => toast.success('Copied to clipboard!');
+  const copyToClipboard = () => toast.success('Copiado!');
 
   const handleNameChange = (event) => setName(event.target.value);
 
   const handleSlugChange = (event) => setSlug(event.target.value);
 
   useEffect(() => {
-    setName(workspace.name);
-    setSlug(workspace.slug);
-    setWorkspace(workspace);
-  }, [workspace, setWorkspace]);
+    if (branch) {
+      setName(branch.name);
+      setSlug(branch.slug);
+      setBranch(branch);
+    }
+  }, [branch, setBranch]);
+
+  if (!branch) return null;
 
   return (
     <AccountLayout>
-      <Meta title={`Nextacular - ${workspace.name} | Settings`} />
+      <Meta title={`Painel Swim - ${branch.name} | Configurações`} />
       <Content.Title
-        title={t("settings.workspace.information")}
-        subtitle={t("settings.general.workspace.description")}
+        title="Informações da Academia"
+        subtitle="Gerencie os detalhes e informações da sua academia"
       />
       <Content.Divider />
       <Content.Container>
         <Card>
           <Card.Body
-            title={t("workspace.action.name.label")}
-            subtitle={t("settings.workspace.name.description")}
+            title="Nome da Academia"
+            subtitle="Usado para identificar sua academia no painel"
           >
             <input
               className="px-3 py-2 border rounded md:w-1/2"
@@ -106,22 +108,22 @@ const General = ({ isTeamOwner, workspace }) => {
             />
           </Card.Body>
           <Card.Footer>
-            <small>Please use 16 characters at maximum</small>
+            <small>Use no máximo 50 caracteres</small>
             {isTeamOwner && (
               <Button
                 className="text-white bg-blue-600 hover:bg-blue-500"
                 disabled={!validName || isSubmitting}
                 onClick={changeName}
               >
-                Save
+                Salvar
               </Button>
             )}
           </Card.Footer>
         </Card>
         <Card>
           <Card.Body
-            title={t("settings.workspace.slug")}
-            subtitle={t("setting.workspace.slug.description")}
+            title="Slug da Academia"
+            subtitle="Usado para identificar sua academia na URL"
           >
             <div className="flex items-center space-x-3">
               <input
@@ -131,14 +133,14 @@ const General = ({ isTeamOwner, workspace }) => {
                 type="text"
                 value={slug}
               />
-              <span className={`text-sm ${slug.length > 16 && 'text-red-600'}`}>
-                {slug.length} / 16
+              <span className={`text-sm ${slug.length > 50 && 'text-red-600'}`}>
+                {slug.length} / 50
               </span>
             </div>
           </Card.Body>
           <Card.Footer>
             <small>
-              {t("settings.workspace.slug.validation.message")}
+              Use apenas letras, números e hífens
             </small>
             {isTeamOwner && (
               <Button
@@ -146,21 +148,21 @@ const General = ({ isTeamOwner, workspace }) => {
                 disabled={!validSlug || isSubmitting}
                 onClick={changeSlug}
               >
-                {t("common.label.save")}
+                Salvar
               </Button>
             )}
           </Card.Footer>
         </Card>
         <Card>
           <Card.Body
-            title={t("settings.workspace.slug.validation.message")}
-            subtitle={t("settings.workspace.id.description")}
+            title="ID da Academia"
+            subtitle="Usado para interações com APIs"
           >
             <div className="flex items-center justify-between px-3 py-2 space-x-5 font-mono text-sm border rounded md:w-1/2">
-              <span className="overflow-x-auto">{workspace.workspaceCode}</span>
+              <span className="overflow-x-auto">{branch.branchCode}</span>
               <CopyToClipboard
                 onCopy={copyToClipboard}
-                text={workspace.workspaceCode}
+                text={branch.branchCode}
               >
                 <DocumentDuplicateIcon className="w-5 h-5 cursor-pointer hover:text-blue-600" />
               </CopyToClipboard>
@@ -175,24 +177,24 @@ const General = ({ isTeamOwner, workspace }) => {
 export const getServerSideProps = async (context) => {
   const session = await getSession(context);
   let isTeamOwner = false;
-  let workspace = null;
+  let branch = null;
 
   if (session) {
-    workspace = await getWorkspace(
+    branch = await getBranch(
       session.user.userId,
       session.user.email,
-      context.params.workspaceSlug
+      context.params.branchSlug
     );
 
-    if (workspace) {
-      isTeamOwner = isWorkspaceOwner(session.user.email, workspace);
+    if (branch) {
+      isTeamOwner = isBranchOwner(session.user.email, branch);
     }
   }
 
   return {
     props: {
       isTeamOwner,
-      workspace,
+      branch,
     },
   };
 };
