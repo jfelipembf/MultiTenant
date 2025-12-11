@@ -45,40 +45,40 @@ model CustomerPayment {
 }
 
 model Domain {
-  id          String    @id @default(cuid())
-  workspaceId String
-  addedById   String
-  name        String
-  subdomain   String?
-  verified    Boolean?  @default(true)
-  value       String?
-  createdAt   DateTime? @default(now())
-  deletedAt   DateTime?
-  updatedAt   DateTime? @updatedAt
+  id        String    @id @default(cuid())
+  branchId  String
+  addedById String
+  name      String
+  subdomain String?
+  verified  Boolean?  @default(true)
+  value     String?
+  createdAt DateTime? @default(now())
+  deletedAt DateTime?
+  updatedAt DateTime? @updatedAt
 
-  addedBy   User      @relation(fields: [addedById], references: [id])
-  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  addedBy User   @relation(fields: [addedById], references: [id])
+  branch  Branch @relation(fields: [branchId], references: [id])
 
   @@map("domains")
 }
 
 model Member {
-  id          String    @id @default(cuid())
-  workspaceId String
-  email       String
-  inviter     String
-  invitedAt   DateTime? @default(now())
-  joinedAt    DateTime?
-  deletedAt   DateTime?
-  updatedAt   DateTime? @updatedAt
+  id        String    @id @default(cuid())
+  branchId  String
+  email     String
+  inviter   String
+  invitedAt DateTime? @default(now())
+  joinedAt  DateTime?
+  deletedAt DateTime?
+  updatedAt DateTime? @updatedAt
 
   status    InvitationStatus @default(PENDING)
   teamRole  TeamRole         @default(MEMBER)
   member    User?            @relation(fields: [email], references: [email], name: "membership")
   invitedBy User?            @relation(fields: [inviter], references: [email], name: "inviter")
-  workspace Workspace        @relation(fields: [workspaceId], references: [id])
+  branch    Branch           @relation(fields: [branchId], references: [id])
 
-  @@unique([workspaceId, email])
+  @@unique([branchId, email])
   @@map("members")
 }
 
@@ -106,13 +106,13 @@ model User {
   deletedAt     DateTime?
   updatedAt     DateTime? @updatedAt
 
-  accounts         Account[]
-  sessions         Session[]
-  membership       Member[]         @relation("membership")
-  invitedMembers   Member[]         @relation("inviter")
-  createdWorkspace Workspace[]
-  customerPayment  CustomerPayment?
-  domains          Domain[]
+  accounts        Account[]
+  sessions        Session[]
+  membership      Member[]         @relation("membership")
+  invitedMembers  Member[]         @relation("inviter")
+  createdBranches Branch[]
+  customerPayment CustomerPayment?
+  domains         Domain[]
 
   @@unique([userCode, email])
   @@map("users")
@@ -127,23 +127,46 @@ model VerificationToken {
   @@map("verificationTokens")
 }
 
-model Workspace {
-  id            String    @id @default(cuid())
-  workspaceCode String    @unique @default(cuid())
-  inviteCode    String    @unique @default(cuid())
-  creatorId     String
-  name          String
-  slug          String
-  createdAt     DateTime? @default(now())
-  deletedAt     DateTime?
-  updatedAt     DateTime? @updatedAt
+model Branch {
+  id           String       @id @default(cuid())
+  branchCode   String       @unique @default(cuid())
+  inviteCode   String       @unique @default(cuid())
+  creatorId    String
+  name         String
+  slug         String
+  idBranchEvo  Int?
+  internalName String?
+  cnpj         String?
+  address      String?
+  neighborhood String?
+  number       String?
+  complement   String?
+  city         String?
+  state        String?
+  stateShort   String?
+  zipCode      String?
+  telephone    String?
+  whatsapp     String?
+  email        String?
+  website      String?
+  latitude     Float?
+  longitude    Float?
+  openingDate  DateTime?
+  logoUrl      String?
+  status       BranchStatus @default(ACTIVE)
+  evoApiUser   String?
+  evoApiKey    String?
+  createdAt    DateTime?    @default(now())
+  deletedAt    DateTime?
+  updatedAt    DateTime?    @updatedAt
 
   creator User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   members Member[]
   domains Domain[]
 
-  @@unique([workspaceCode, inviteCode])
-  @@map("workspaces")
+  @@unique([branchCode, inviteCode])
+  @@index([status])
+  @@map("branches")
 }
 
 enum InvitationStatus {
@@ -166,4 +189,10 @@ enum TeamRole {
 enum UserRole {
   USER
   ADMIN
+}
+
+enum BranchStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
 }
