@@ -99,8 +99,10 @@ model User {
   userCode      String    @unique @default(cuid())
   name          String?
   email         String?   @unique
+  password      String?
   emailVerified DateTime?
   image         String?
+  role          UserRole  @default(USER)
   createdAt     DateTime? @default(now())
   deletedAt     DateTime?
   updatedAt     DateTime? @updatedAt
@@ -160,4 +162,9 @@ enum SubscriptionType {
 enum TeamRole {
   MEMBER
   OWNER
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }
