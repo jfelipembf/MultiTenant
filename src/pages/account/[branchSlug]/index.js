@@ -22,8 +22,7 @@ const BranchDashboard = ({ branch: branchData }) => {
 
   const currentBranch = branch || branchData;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.painelswim.com';
-  const branchUrl = `${appUrl.replace('app.', '')}/${currentBranch?.slug}`;
-  const subdomainUrl = `https://${currentBranch?.slug}.painelswim.com`;
+  const academiaUrl = `${appUrl}/academia/${currentBranch?.slug}`;
 
   const copyToClipboard = () => toast.success('Link copiado!');
 
@@ -46,8 +45,8 @@ const BranchDashboard = ({ branch: branchData }) => {
               subtitle="Compartilhe este link com a academia para que ela acesse o sistema"
             >
               <div className="flex items-center justify-between px-3 py-2 mt-2 space-x-3 font-mono text-sm bg-gray-100 border rounded">
-                <span className="overflow-x-auto text-blue-600">{subdomainUrl}</span>
-                <CopyToClipboard onCopy={copyToClipboard} text={subdomainUrl}>
+                <span className="overflow-x-auto text-blue-600">{academiaUrl}</span>
+                <CopyToClipboard onCopy={copyToClipboard} text={academiaUrl}>
                   <DocumentDuplicateIcon className="w-5 h-5 cursor-pointer hover:text-blue-600 flex-shrink-0" />
                 </CopyToClipboard>
               </div>
@@ -77,10 +76,10 @@ const BranchDashboard = ({ branch: branchData }) => {
             >
               <div className="mt-2">
                 <span className={`px-3 py-1 text-sm rounded-full ${currentBranch?.status === 'ACTIVE'
-                    ? 'bg-green-100 text-green-800'
-                    : currentBranch?.status === 'INACTIVE'
-                      ? 'bg-gray-100 text-gray-800'
-                      : 'bg-red-100 text-red-800'
+                  ? 'bg-green-100 text-green-800'
+                  : currentBranch?.status === 'INACTIVE'
+                    ? 'bg-gray-100 text-gray-800'
+                    : 'bg-red-100 text-red-800'
                   }`}>
                   {currentBranch?.status === 'ACTIVE' ? 'Ativa' :
                     currentBranch?.status === 'INACTIVE' ? 'Inativa' : 'Suspensa'}
