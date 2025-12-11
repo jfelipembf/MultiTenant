@@ -135,7 +135,7 @@ model Branch {
   creatorId    String
   name         String
   slug         String
-  idBranchEvo  Int?
+  idBranch     Int?         @unique // Identificador numérico único da academia
   internalName String?
   cnpj         String?
   address      String?
@@ -155,8 +155,6 @@ model Branch {
   openingDate  DateTime?
   logoUrl      String?
   status       BranchStatus @default(ACTIVE)
-  evoApiUser   String?
-  evoApiKey    String?
   createdAt    DateTime?    @default(now())
   deletedAt    DateTime?
   updatedAt    DateTime?    @updatedAt
