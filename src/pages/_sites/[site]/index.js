@@ -1,48 +1,83 @@
-import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import DefaultErrorPage from 'next/error';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 import Meta from '@/components/Meta';
-import { getSiteWorkspace } from '@/prisma/services/workspace';
+import { getSiteBranch } from '@/prisma/services/branch';
 
-const Site = ({ workspace }) => {
+const Site = ({ branch }) => {
   const router = useRouter();
 
   if (router.isFallback) {
-    return <h1>Loading...</h1>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-xl">Carregando...</p>
+      </div>
+    );
   }
 
-  return workspace ? (
-    <main className="relative flex flex-col items-center justify-center h-screen space-y-10 text-gray-800 bg-gray-50">
-      <Meta title={workspace.name} />
-      <div className="flex flex-col items-center justify-center p-10 space-y-5 text-center ">
-        <h1 className="text-4xl font-bold">
-          Welcome to your workspace&apos;s subdomain!
-        </h1>
-        <h2 className="text-2xl">
-          This is the workspace of <strong>{workspace.name}.</strong>
-        </h2>
-        <p>You can also visit these links:</p>
-        <Link
-          href={`https://${workspace.hostname}`}
-          className="flex space-x-3 text-blue-600 hover:underline"
-          target="_blank"
-        >
-          <span>{`${workspace.hostname}`}</span>
-          <ArrowTopRightOnSquareIcon className="w-5 h-5" />
-        </Link>
-        {workspace.domains.map((domain, index) => (
+  return branch ? (
+    <main className="relative flex flex-col items-center justify-center min-h-screen text-gray-800 bg-gradient-to-br from-blue-50 to-blue-100">
+      <Meta title={`${branch.name} - Painel Swim`} />
+
+      {/* Header */}
+      <div className="w-full p-4 bg-white shadow-sm">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            {branch.logoUrl ? (
+              <img src={branch.logoUrl} alt={branch.name} className="w-10 h-10 rounded-full" />
+            ) : (
+              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                {branch.name.charAt(0)}
+              </div>
+            )}
+            <h1 className="text-xl font-bold text-gray-800">{branch.name}</h1>
+          </div>
           <Link
-            key={index}
-            href={`https://${domain.name}`}
-            className="flex space-x-3 text-blue-600 hover:underline"
-            target="_blank"
+            href="/auth/login"
+            className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-500"
           >
-            <span>{domain.name}</span>
-            <ArrowTopRightOnSquareIcon className="w-5 h-5" />
+            Entrar
           </Link>
-        ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 flex flex-col items-center justify-center p-10 space-y-8 text-center">
+        <div className="space-y-4">
+          <h2 className="text-4xl font-bold text-gray-800">
+            Bem-vindo à {branch.name}
+          </h2>
+          <p className="text-xl text-gray-600">
+            Sistema de gestão da academia
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Link
+            href="/auth/login"
+            className="px-8 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-500 font-medium"
+          >
+            Acessar o Sistema
+          </Link>
+          <Link
+            href="/auth/register"
+            className="px-8 py-3 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 font-medium"
+          >
+            Criar Conta
+          </Link>
+        </div>
+
+        {branch.telephone && (
+          <p className="text-gray-500">
+            Contato: {branch.telephone}
+          </p>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="w-full p-4 text-center text-gray-500 text-sm">
+        <p>Powered by <strong>Painel Swim</strong></p>
       </div>
     </main>
   ) : (
@@ -54,8 +89,6 @@ const Site = ({ workspace }) => {
 };
 
 export const getStaticPaths = async () => {
-  // Return empty paths to avoid database calls during build
-  // Pages will be generated on-demand with fallback: 'blocking'
   return {
     paths: [],
     fallback: 'blocking',
@@ -64,27 +97,25 @@ export const getStaticPaths = async () => {
 
 export const getStaticProps = async ({ params }) => {
   const { site } = params;
-  let workspace = null;
+  let branch = null;
 
   try {
-    const siteWorkspace = await getSiteWorkspace(site, site.includes('.'));
+    const siteBranch = await getSiteBranch(site, site.includes('.'));
 
-    if (siteWorkspace) {
-      const { host } = new URL(process.env.APP_URL);
-      workspace = {
-        domains: siteWorkspace.domains,
-        name: siteWorkspace.name,
-        hostname: `${siteWorkspace.slug}.${host}`,
+    if (siteBranch) {
+      branch = {
+        name: siteBranch.name,
+        slug: siteBranch.slug,
+        logoUrl: siteBranch.logoUrl,
+        telephone: siteBranch.telephone,
       };
     }
   } catch (error) {
-    // Durante o build, o banco pode não estar acessível
-    // Retorna workspace null e a página mostrará 404
-    console.error('Erro ao buscar workspace:', error.message);
+    console.error('Erro ao buscar academia:', error.message);
   }
 
   return {
-    props: { workspace },
+    props: { branch },
     revalidate: 10,
   };
 };
