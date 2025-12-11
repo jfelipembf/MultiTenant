@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -6,14 +6,11 @@ import { useSession, signOut } from 'next-auth/react';
 import { Toaster } from 'react-hot-toast';
 
 import menu from '@/config/menu/index';
-import { useBranch } from '@/providers/branch';
 
 const AdminHorizontalLayout = ({ children, title = 'Painel Swim', subtitle = '' }) => {
     const { status, data } = useSession();
     const router = useRouter();
-    const { branch } = useBranch();
-    const navigation = menu(branch?.slug);
-    const [openMenu, setOpenMenu] = useState(null);
+    const navigation = menu();
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -58,20 +55,37 @@ const AdminHorizontalLayout = ({ children, title = 'Painel Swim', subtitle = '' 
                             </div>
                         </div>
 
-                        <div className="d-flex">
-                            {/* Profile */}
-                            <div className="dropdown d-inline-block">
-                                <button
-                                    type="button"
-                                    className="btn header-item waves-effect"
-                                    id="page-header-user-dropdown"
-                                >
-                                    <span className="d-none d-xl-inline-block ms-1">{data?.user?.name || data?.user?.email}</span>
-                                </button>
-                            </div>
+                        <div className="d-flex align-items-center">
+                            {/* Profile com Avatar */}
+                            <Link
+                                href="/account/settings"
+                                className="d-flex align-items-center text-decoration-none header-item"
+                                title="Meu Perfil"
+                            >
+                                <span className="d-none d-xl-inline-block me-2 text-dark">
+                                    {data?.user?.name || data?.user?.email}
+                                </span>
+                                {data?.user?.image ? (
+                                    <Image
+                                        src={data.user.image}
+                                        alt="Avatar"
+                                        width={36}
+                                        height={36}
+                                        className="rounded-circle"
+                                        style={{ objectFit: 'cover' }}
+                                    />
+                                ) : (
+                                    <div
+                                        className="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold"
+                                        style={{ width: 36, height: 36, fontSize: 14 }}
+                                    >
+                                        {(data?.user?.name?.charAt(0) || data?.user?.email?.charAt(0) || 'U').toUpperCase()}
+                                    </div>
+                                )}
+                            </Link>
                             <button
                                 type="button"
-                                className="btn header-item noti-icon waves-effect"
+                                className="btn header-item noti-icon waves-effect ms-2"
                                 onClick={() => signOut({ callbackUrl: '/auth/login' })}
                                 title="Sair"
                             >
@@ -95,35 +109,20 @@ const AdminHorizontalLayout = ({ children, title = 'Painel Swim', subtitle = '' 
                                 <nav className="navbar navbar-light navbar-expand-lg topnav-menu">
                                     <div className="navbar-collapse" id="topnav-menu-content">
                                         <ul className="navbar-nav">
-                                            {navigation.map((section, idx) => (
-                                                <li className="nav-item dropdown" key={idx}>
-                                                    <Link
-                                                        href="#"
-                                                        className="nav-link dropdown-toggle arrow-none"
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            setOpenMenu(openMenu === idx ? null : idx);
-                                                        }}
-                                                    >
-                                                        <i className={`${section.icon} me-2`}></i>
-                                                        {section.name}
-                                                    </Link>
-                                                    <div className={`dropdown-menu ${openMenu === idx ? 'show' : ''}`}>
-                                                        {section.menuItems.map((item) => {
-                                                            const isActive = router.asPath === item.path || router.pathname === item.path;
-                                                            return (
-                                                                <Link
-                                                                    key={item.path}
-                                                                    href={item.path}
-                                                                    className={`dropdown-item ${isActive ? 'active' : ''}`}
-                                                                >
-                                                                    {item.name}
-                                                                </Link>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </li>
-                                            ))}
+                                            {navigation.map((item, idx) => {
+                                                const isActive = router.asPath === item.path || router.asPath.startsWith(item.path + '/');
+                                                return (
+                                                    <li className="nav-item" key={idx}>
+                                                        <Link
+                                                            href={item.path}
+                                                            className={`nav-link ${isActive ? 'active' : ''}`}
+                                                        >
+                                                            <i className={`${item.icon} me-2`}></i>
+                                                            {item.name}
+                                                        </Link>
+                                                    </li>
+                                                );
+                                            })}
                                         </ul>
                                     </div>
                                 </nav>
