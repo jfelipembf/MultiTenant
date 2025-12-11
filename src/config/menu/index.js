@@ -1,39 +1,47 @@
 const menu = (branchSlug) => {
-  // Menu base que sempre aparece
-  const baseMenu = [
-    {
-      name: 'Academias',
-      icon: 'ti-briefcase',
-      menuItems: [
-        {
-          name: 'Todas as Academias',
-          path: '/account/branches',
-          icon: 'ti-list',
-        },
-      ],
-    },
-  ];
-
-  // Se não tem branchSlug, retorna apenas o menu base
+  // Menu quando NÃO tem academia selecionada (área geral do usuário)
   if (!branchSlug) {
-    return baseMenu;
+    return [
+      {
+        name: 'Início',
+        icon: 'ti-home',
+        menuItems: [
+          {
+            name: 'Minhas Academias',
+            path: '/account',
+            icon: 'ti-dashboard',
+          },
+        ],
+      },
+      {
+        name: 'Minha Conta',
+        icon: 'ti-user',
+        menuItems: [
+          {
+            name: 'Configurações',
+            path: '/account/settings',
+            icon: 'ti-settings',
+          },
+          {
+            name: 'Faturamento',
+            path: '/account/billing',
+            icon: 'ti-credit-card',
+          },
+        ],
+      },
+    ];
   }
 
-  // Menu completo quando tem uma branch selecionada
+  // Menu quando TEM academia selecionada (área da academia)
   return [
     {
-      name: 'Dashboard',
+      name: 'Academia',
       icon: 'ti-home',
       menuItems: [
         {
-          name: 'Início',
+          name: 'Dashboard',
           path: `/account/${branchSlug}`,
           icon: 'ti-dashboard',
-        },
-        {
-          name: 'Integrações',
-          path: `/account/${branchSlug}/integrations`,
-          icon: 'ti-plug',
         },
       ],
     },
@@ -63,7 +71,17 @@ const menu = (branchSlug) => {
         },
       ],
     },
-    ...baseMenu,
+    {
+      name: 'Voltar',
+      icon: 'ti-arrow-left',
+      menuItems: [
+        {
+          name: 'Minhas Academias',
+          path: '/account',
+          icon: 'ti-list',
+        },
+      ],
+    },
   ];
 };
 
