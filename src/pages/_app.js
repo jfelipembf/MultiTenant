@@ -10,12 +10,12 @@ import { useTranslation, initReactI18next } from "react-i18next";
 
 import progressBarConfig from '@/config/progress-bar/index';
 import swrConfig from '@/config/swr/index';
-import WorkspaceProvider from '@/providers/workspace';
+import BranchProvider from '@/providers/branch';
 
 import '@/styles/globals.css';
-let rawdata = require('../messages/en.json');
+let rawdata = require('../messages/pt.json');
 
-let langCode = "en"
+let langCode = "pt"
 let langObject = {}
 langObject[langCode] = {}
 
@@ -24,8 +24,8 @@ i18n
   .use(initReactI18next)
   .init({
     resources: langObject,
-    lng: "en",
-    fallbackLng: "en",
+    lng: "pt",
+    fallbackLng: "pt",
     interpolation: {
       escapeValue: false
     }
@@ -63,10 +63,10 @@ const App = ({ Component, pageProps }) => {
     <SessionProvider session={pageProps.session}>
       <SWRConfig value={swrOptions}>
         <ThemeProvider attribute="class">
-          <WorkspaceProvider>
+          <BranchProvider>
             {progress && <TopBarProgress />}
             <Component {...pageProps} />
-          </WorkspaceProvider>
+          </BranchProvider>
         </ThemeProvider>
       </SWRConfig>
     </SessionProvider>

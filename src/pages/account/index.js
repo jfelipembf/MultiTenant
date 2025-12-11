@@ -6,25 +6,23 @@ import Button from '@/components/Button/index';
 import Card from '@/components/Card/index';
 import Content from '@/components/Content/index';
 import Meta from '@/components/Meta/index';
-import { useInvitations, useWorkspaces } from '@/hooks/data/index';
+import { useInvitations, useBranches } from '@/hooks/data/index';
 import { AccountLayout } from '@/layouts/index';
 import api from '@/lib/common/api';
-import { useWorkspace } from '@/providers/workspace';
-import { useTranslation } from "react-i18next";
+import { useBranch } from '@/providers/branch';
 
 const Welcome = () => {
   const router = useRouter();
   const { data: invitationsData, isLoading: isFetchingInvitations } =
     useInvitations();
-  const { data: workspacesData, isLoading: isFetchingWorkspaces } =
-    useWorkspaces();
-  const { setWorkspace } = useWorkspace();
-  const { t } = useTranslation();
+  const { data: branchesData, isLoading: isFetchingBranches } =
+    useBranches();
+  const { setBranch } = useBranch();
   const [isSubmitting, setSubmittingState] = useState(false);
 
   const accept = (memberId) => {
     setSubmittingState(true);
-    api(`/api/workspace/team/accept`, {
+    api(`/api/branch/team/accept`, {
       body: { memberId },
       method: 'PUT',
     }).then((response) => {
@@ -35,14 +33,14 @@ const Welcome = () => {
           toast.error(response.errors[error].msg)
         );
       } else {
-        toast.success('Accepted invitation!');
+        toast.success('Convite aceito!');
       }
     });
   };
 
   const decline = (memberId) => {
     setSubmittingState(true);
-    api(`/api/workspace/team/decline`, {
+    api(`/api/branch/team/decline`, {
       body: { memberId },
       method: 'PUT',
     }).then((response) => {
@@ -53,54 +51,57 @@ const Welcome = () => {
           toast.error(response.errors[error].msg)
         );
       } else {
-        toast.success('Declined invitation!');
+        toast.success('Convite recusado!');
       }
     });
   };
 
-  const navigate = (workspace) => {
-    setWorkspace(workspace);
-    router.replace(`/account/${workspace.slug}`);
+  const navigate = (branch) => {
+    setBranch(branch);
+    router.replace(`/account/${branch.slug}`);
   };
 
   return (
     <AccountLayout>
-      <Meta title="Nextacular - Dashboard" />
+      <Meta title="Painel Swim - Dashboard" />
       <Content.Title
-        title={t('workspace.dashboard.header.title')}
-        subtitle={t("workspace.dashboard.header.description")}
+        title="Painel Swim"
+        subtitle="Gerencie suas academias de natação"
       />
       <Content.Divider />
       <Content.Container>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-          {isFetchingWorkspaces ? (
+          {isFetchingBranches ? (
             <Card>
               <Card.Body />
               <Card.Footer />
             </Card>
-          ) : workspacesData?.workspaces.length > 0 ? (
-            workspacesData.workspaces.map((workspace, index) => (
+          ) : branchesData?.branches?.length > 0 ? (
+            branchesData.branches.map((branch, index) => (
               <Card key={index}>
-                <Card.Body title={workspace.name} />
+                <Card.Body
+                  title={branch.name}
+                  subtitle={branch.city ? `${branch.city} - ${branch.state}` : 'Sem localização'}
+                />
                 <Card.Footer>
                   <button
                     className="text-blue-600"
-                    onClick={() => navigate(workspace)}
+                    onClick={() => navigate(branch)}
                   >
-                    Select workspace &rarr;
+                    Acessar academia &rarr;
                   </button>
                 </Card.Footer>
               </Card>
             ))
           ) : (
-            <Card.Empty>{t('workspace.message.createworkspace')}</Card.Empty>
+            <Card.Empty>Comece criando uma academia agora</Card.Empty>
           )}
         </div>
       </Content.Container>
       <Content.Divider thick />
       <Content.Title
-        title={t("workspace.dashboard.header.invitations.title")}
-        subtitle={t("workspace.dashboard.header.invitations.description")}
+        title="Convites"
+        subtitle="Convites recebidos pela sua conta"
       />
       <Content.Divider />
       <Content.Container>
@@ -110,13 +111,12 @@ const Welcome = () => {
               <Card.Body />
               <Card.Footer />
             </Card>
-          ) : invitationsData?.invitations.length > 0 ? (
+          ) : invitationsData?.invitations?.length > 0 ? (
             invitationsData.invitations.map((invitation, index) => (
               <Card key={index}>
                 <Card.Body
-                  title={invitation.workspace.name}
-                  subtitle={`You have been invited by ${invitation.invitedBy.name || invitation.invitedBy.email
-                    }`}
+                  title={invitation.branch?.name || 'Academia'}
+                  subtitle={`Convidado por ${invitation.invitedBy?.name || invitation.invitedBy?.email || 'Desconhecido'}`}
                 />
                 <Card.Footer>
                   <Button
@@ -124,21 +124,21 @@ const Welcome = () => {
                     disabled={isSubmitting}
                     onClick={() => accept(invitation.id)}
                   >
-                    Accept
+                    Aceitar
                   </Button>
                   <Button
                     className="text-red-600 border border-red-600 hover:bg-red-600 hover:text-white"
                     disabled={isSubmitting}
                     onClick={() => decline(invitation.id)}
                   >
-                    Decline
+                    Recusar
                   </Button>
                 </Card.Footer>
               </Card>
             ))
           ) : (
             <Card.Empty>
-              {t("workspace.team.invitations.empty.message")}
+              Você ainda não recebeu convites para nenhuma academia.
             </Card.Empty>
           )}
         </div>

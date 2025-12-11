@@ -1,35 +1,35 @@
-const menu = (workspaceId) => [
+const menu = (branchSlug) => [
   {
-    name: 'Workspace',
+    name: 'Academia',
     menuItems: [
       {
-        name: 'common.label.home',
-        path: `/account/${workspaceId}`,
+        name: 'Início',
+        path: `/account/${branchSlug}`,
       },
       {
-        name: 'common.label.integrations',
-        path: `/account/${workspaceId}/integrations`,
+        name: 'Integrações',
+        path: `/account/${branchSlug}/integrations`,
       },
     ],
   },
   {
-    name: 'Settings',
+    name: 'Configurações',
     menuItems: [
       {
-        name: 'settings.workspace.information',
-        path: `/account/${workspaceId}/settings/general`,
+        name: 'Informações',
+        path: `/account/${branchSlug}/settings/general`,
       },
       {
-        name: 'settings.domain.configuration',
-        path: `/account/${workspaceId}/settings/domain`,
+        name: 'Domínio',
+        path: `/account/${branchSlug}/settings/domain`,
       },
       {
-        name: 'settings.team.management',
-        path: `/account/${workspaceId}/settings/team`,
+        name: 'Equipe',
+        path: `/account/${branchSlug}/settings/team`,
       },
       {
-        name: 'settings.advanced',
-        path: `/account/${workspaceId}/settings/advanced`,
+        name: 'Avançado',
+        path: `/account/${branchSlug}/settings/advanced`,
       },
     ],
   },
