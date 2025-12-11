@@ -3,10 +3,9 @@ import { getSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 
 import Meta from '@/components/Meta/index';
-import Content from '@/components/Content/index';
 import Card from '@/components/Card/index';
 import Button from '@/components/Button/index';
-import { AccountLayout } from '@/layouts/index';
+import { AdminHorizontalLayout } from '@/layouts/index';
 import api from '@/lib/common/api';
 
 const statusColors = {
@@ -83,27 +82,28 @@ const AdminBranches = ({ isAdmin }) => {
 
     if (!isAdmin) {
         return (
-            <AccountLayout>
+            <AdminHorizontalLayout title="Acesso Negado">
                 <Meta title="Painel Swim - Acesso Negado" />
-                <Content.Container>
-                    <div className="text-center py-10">
-                        <h1 className="text-2xl font-bold text-red-600">Acesso Negado</h1>
-                        <p className="text-gray-600 mt-2">Você não tem permissão para acessar esta página.</p>
-                    </div>
-                </Content.Container>
-            </AccountLayout>
+                <div className="text-center py-10">
+                    <h1 className="text-2xl font-bold text-red-600">Acesso Negado</h1>
+                    <p className="text-gray-600 mt-2">Você não tem permissão para acessar esta página.</p>
+                </div>
+            </AdminHorizontalLayout>
         );
     }
 
     return (
-        <AccountLayout>
+        <AdminHorizontalLayout title="Gerenciar Academias">
             <Meta title="Painel Swim - Gerenciar Academias" />
-            <Content.Title
-                title="Gerenciar Academias"
-                subtitle="Controle de assinaturas e acesso das academias"
-            />
-            <Content.Divider />
-            <Content.Container>
+            <div className="space-y-6">
+                <div className="flex items-start justify-between">
+                    <div>
+                        <h2 className="text-2xl font-semibold text-gray-900">Controle de Assinaturas</h2>
+                        <p className="text-gray-500">
+                            Acompanhe o status de cada academia e realize ações administrativas.
+                        </p>
+                    </div>
+                </div>
                 {loading ? (
                     <div className="text-center py-10">
                         <p className="text-gray-600">Carregando...</p>
@@ -199,8 +199,8 @@ const AdminBranches = ({ isAdmin }) => {
                         </table>
                     </div>
                 )}
-            </Content.Container>
-        </AccountLayout>
+            </div>
+        </AdminHorizontalLayout>
     );
 };
 
