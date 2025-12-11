@@ -1,11 +1,12 @@
-import { getSession } from 'next-auth/react';
+import { getServerSession } from 'next-auth/next';
 import { getBranch, updateBranch } from '@/prisma/services/branch';
+import { authOptions } from '../auth/[...nextauth]';
 
 const handler = async (req, res) => {
     const { method } = req;
     const { slug } = req.query;
 
-    const session = await getSession({ req });
+    const session = await getServerSession(req, res, authOptions);
 
     if (!session) {
         return res.status(401).json({ error: 'Não autorizado' });
