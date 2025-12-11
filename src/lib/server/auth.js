@@ -1,4 +1,3 @@
-import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 
@@ -6,7 +5,7 @@ import prisma from '@/prisma/index';
 import { createPaymentAccount, getPayment } from '@/prisma/services/customer';
 
 export const authOptions = {
-  adapter: PrismaAdapter(prisma),
+  // Não usar adapter com CredentialsProvider + JWT
   callbacks: {
     jwt: async ({ token, user }) => {
       if (user) {
