@@ -1,7 +1,7 @@
 import useSWR from 'swr';
 
 const useDomains = (slug) => {
-  const apiRoute = `/api/workspace/${slug}/domains`;
+  const apiRoute = `/api/branch/${slug}/domains`;
   const { data, error } = useSWR(`${apiRoute}`);
   return {
     ...data,

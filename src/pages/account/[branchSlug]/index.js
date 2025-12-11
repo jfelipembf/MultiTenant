@@ -1,18 +1,19 @@
-import { useEffect, useState } from 'react';
-import { DocumentDuplicateIcon, PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { CopyToClipboard } from 'react-copy-to-clipboard';
-import toast from 'react-hot-toast';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useEffect, useMemo, useState } from 'react';
 import { getSession } from 'next-auth/react';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
+import { CheckIcon, DocumentDuplicateIcon, PencilIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 
 import Meta from '@/components/Meta/index';
-import Card from '@/components/Card/index';
-import Button from '@/components/Button/index';
 import { AdminHorizontalLayout } from '@/layouts/index';
 import { useBranch } from '@/providers/branch';
 import { getBranch } from '@/prisma/services/branch';
 import api from '@/lib/common/api';
 
-const subscriptionStatusLabels = {
+const STATUS_LABELS = {
   TRIAL: 'Período de Teste',
   ACTIVE: 'Ativa',
   PAST_DUE: 'Pagamento Pendente',
@@ -20,51 +21,117 @@ const subscriptionStatusLabels = {
   CANCELLED: 'Cancelada',
 };
 
-const subscriptionStatusColors = {
-  TRIAL: 'bg-blue-100 text-blue-800',
-  ACTIVE: 'bg-green-100 text-green-800',
-  PAST_DUE: 'bg-yellow-100 text-yellow-800',
-  SUSPENDED: 'bg-red-100 text-red-800',
-  CANCELLED: 'bg-gray-100 text-gray-800',
-};
-
-const planLabels = {
+const PLAN_LABELS = {
   BASIC: 'Básico',
   PRO: 'Profissional',
   ENTERPRISE: 'Empresarial',
 };
 
-// Formata o ID da academia como 0001, 0002, etc.
-const formatIdBranch = (id) => {
-  if (!id) return '-';
-  return String(id).padStart(4, '0');
+const BADGE_CLASSES = {
+  TRIAL: 'badge-soft-info',
+  ACTIVE: 'badge-soft-success',
+  PAST_DUE: 'badge-soft-warning',
+  SUSPENDED: 'badge-soft-danger',
+  CANCELLED: 'badge-soft-secondary',
 };
 
+const MiniStatCard = ({ icon, title, children }) => (
+  <div className="card mini-stats-wid h-100">
+    <div className="card-body">
+      <div className="d-flex align-items-center">
+        <div className="flex-shrink-0 avatar-sm me-3">
+          <span className="avatar-title rounded-circle bg-soft-primary text-primary fs-4">
+            <i className={icon}></i>
+          </span>
+        </div>
+        <div className="flex-grow-1">
+          <p className="text-muted fw-medium mb-2">{title}</p>
+          {children}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const InfoListCard = ({ title, subtitle, items, isEditing, formData, currentBranch, handleChange }) => (
+  <div className="card h-100">
+    <div className="card-body pb-0">
+      <h4 className="card-title mb-1">{title}</h4>
+      {subtitle && <p className="card-title-desc text-muted mb-0">{subtitle}</p>}
+    </div>
+    <ul className="list-group list-group-flush">
+      {items.map((item) => (
+        <li className="list-group-item d-flex justify-content-between align-items-center" key={item.key}>
+          <div className="text-muted text-uppercase small fw-semibold">{item.label}</div>
+          <div className="ms-3 flex-grow-1 text-end">
+            {isEditing && item.editable !== false ? (
+              <input
+                type={item.type || 'text'}
+                name={item.key}
+                value={formData[item.key] ?? ''}
+                maxLength={item.maxLength}
+                className="form-control form-control-sm text-end"
+                onChange={handleChange}
+              />
+            ) : item.render ? (
+              item.render(currentBranch)
+            ) : (
+              <span className="fw-semibold text-dark">{currentBranch?.[item.key] || '-'}</span>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
 const BranchDashboard = ({ branch: branchData }) => {
+  const router = useRouter();
+  const { branchSlug } = router.query;
   const { branch, setBranch } = useBranch();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(!branch && !branchData);
 
+  // Se não temos dados no provider nem do SSR, busca via API
   useEffect(() => {
     if (branchData) {
       setBranch(branchData);
       setFormData(branchData);
+      setLoading(false);
+    } else if (branch) {
+      setFormData(branch);
+      setLoading(false);
+    } else if (branchSlug && !branch) {
+      // Fetch client-side apenas se necessário
+      api(`/api/branch/${branchSlug}`)
+        .then((res) => {
+          if (res.data?.branch) {
+            setBranch(res.data.branch);
+            setFormData(res.data.branch);
+          }
+        })
+        .finally(() => setLoading(false));
     }
-  }, [branchData, setBranch]);
+  }, [branchData, branch, branchSlug, setBranch]);
 
   const currentBranch = branch || branchData;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.painelswim.com';
-  const academiaUrl = `${appUrl}/academia/${currentBranch?.slug}`;
+  const academyUrl = useMemo(() => (currentBranch ? `${appUrl}/academia/${currentBranch.slug}` : ''), [appUrl, currentBranch]);
 
-  const copyToClipboard = () => toast.success('Copiado!');
+  const copyToClipboard = (text) => {
+    if (!text) return;
+    toast.success('Copiado!');
+  };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSave = async () => {
+    if (!currentBranch) return;
     setSaving(true);
     try {
       const response = await api(`/api/branch/${currentBranch.slug}`, {
@@ -91,314 +158,279 @@ const BranchDashboard = ({ branch: branchData }) => {
     setIsEditing(false);
   };
 
-  const formatDate = (date) => {
-    if (!date) return '-';
-    return new Date(date).toLocaleDateString('pt-BR');
-  };
+  const formatDate = (date) => (date ? new Date(date).toLocaleDateString('pt-BR') : '-');
+  const formatDateTime = (date) =>
+    date
+      ? new Date(date).toLocaleString('pt-BR', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+      })
+      : '-';
+
+  if (loading) {
+    return (
+      <AdminHorizontalLayout title="Carregando..." subtitle="">
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Carregando...</span>
+          </div>
+        </div>
+      </AdminHorizontalLayout>
+    );
+  }
 
   if (!currentBranch) return null;
+
+  const commercialItems = [
+    {
+      label: 'ID da Academia',
+      key: 'idBranch',
+      editable: false,
+      render: () => <span className="fw-semibold text-dark font-monospace">{String(currentBranch?.idBranch ?? '-').padStart(4, '0')}</span>,
+    },
+    { label: 'Nome Fantasia', key: 'name' },
+    { label: 'Nome Interno', key: 'internalName' },
+    { label: 'CNPJ', key: 'cnpj' },
+    { label: 'Website', key: 'website' },
+  ];
+
+  const contactItems = [
+    { label: 'E-mail', key: 'email', type: 'email' },
+    { label: 'Telefone', key: 'telephone' },
+    { label: 'WhatsApp', key: 'whatsapp' },
+    {
+      label: 'Slug',
+      key: 'slug',
+      editable: false,
+      render: () => <span className="badge bg-soft-secondary text-dark">{currentBranch?.slug || '-'}</span>,
+    },
+  ];
+
+  const addressItems = [
+    { label: 'CEP', key: 'zipCode' },
+    { label: 'Endereço', key: 'address' },
+    { label: 'Número', key: 'number' },
+    { label: 'Complemento', key: 'complement' },
+    { label: 'Bairro', key: 'neighborhood' },
+    { label: 'Cidade', key: 'city' },
+    { label: 'Estado', key: 'state' },
+    { label: 'UF', key: 'stateShort', maxLength: 2 },
+  ];
+
+  const systemItems = [
+    {
+      label: 'Criado em',
+      key: 'createdAt',
+      editable: false,
+      render: () => <span className="fw-semibold text-dark">{formatDate(currentBranch?.createdAt)}</span>,
+    },
+    {
+      label: 'Código de Convite',
+      key: 'inviteCode',
+      editable: false,
+      render: () => (
+        <div className="d-flex align-items-center justify-content-end gap-2">
+          <span className="fw-semibold text-dark font-monospace">{currentBranch?.inviteCode || '-'}</span>
+          {currentBranch?.inviteCode && (
+            <CopyToClipboard text={currentBranch.inviteCode} onCopy={() => copyToClipboard(currentBranch.inviteCode)}>
+              <DocumentDuplicateIcon width={16} height={16} role="button" className="text-primary" />
+            </CopyToClipboard>
+          )}
+        </div>
+      ),
+    },
+    { label: 'Latitude', key: 'latitude', editable: false },
+    { label: 'Longitude', key: 'longitude', editable: false },
+  ];
 
   return (
     <AdminHorizontalLayout title={currentBranch?.name || 'Academia'} subtitle="Visualize e edite os dados da academia">
       <Meta title={`Painel Swim - ${currentBranch?.name || 'Academia'}`} />
-      <div className="space-y-6">
-        {/* Ações */}
-        <div className="flex justify-end mb-4 space-x-2">
-          {isEditing ? (
-            <>
-              <Button
-                className="text-white bg-green-600 hover:bg-green-500"
-                disabled={saving}
-                onClick={handleSave}
-              >
-                <CheckIcon className="w-4 h-4 mr-1" />
-                {saving ? 'Salvando...' : 'Salvar'}
-              </Button>
-              <Button
-                className="text-gray-700 bg-gray-200 hover:bg-gray-300"
-                onClick={handleCancel}
-              >
-                <XMarkIcon className="w-4 h-4 mr-1" />
-                Cancelar
-              </Button>
-            </>
-          ) : (
-            <Button
-              className="text-white bg-blue-600 hover:bg-blue-500"
-              onClick={() => setIsEditing(true)}
-            >
-              <PencilIcon className="w-4 h-4 mr-1" />
-              Editar
-            </Button>
-          )}
-        </div>
 
-        {/* Cards de Status */}
-        <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-3">
-          {/* Link de Acesso */}
-          <Card>
-            <Card.Body title="Link de Acesso">
-              <div className="flex items-center justify-between px-3 py-2 mt-2 space-x-2 font-mono text-xs bg-gray-100 border rounded">
-                <span className="overflow-x-auto text-blue-600 truncate">{academiaUrl}</span>
-                <CopyToClipboard onCopy={copyToClipboard} text={academiaUrl}>
-                  <DocumentDuplicateIcon className="w-5 h-5 cursor-pointer hover:text-blue-600 flex-shrink-0" />
-                </CopyToClipboard>
-              </div>
-            </Card.Body>
-          </Card>
-
-          {/* Status da Assinatura */}
-          <Card>
-            <Card.Body title="Assinatura">
-              <div className="mt-2 space-y-2">
-                <span className={`px-3 py-1 text-sm rounded-full ${subscriptionStatusColors[currentBranch?.subscriptionStatus]}`}>
-                  {subscriptionStatusLabels[currentBranch?.subscriptionStatus]}
-                </span>
-                <p className="text-sm text-gray-500">
-                  Plano: {planLabels[currentBranch?.subscriptionPlan]}
-                </p>
-                {currentBranch?.subscriptionStatus === 'TRIAL' && currentBranch?.trialEndsAt && (
-                  <p className="text-xs text-gray-400">
-                    Expira em: {formatDate(currentBranch.trialEndsAt)}
+      <div className="row g-4">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-body">
+              <div className="row g-4 align-items-center">
+                <div className="col-sm-auto">
+                  <div className="avatar-xxl rounded-circle overflow-hidden border" style={{ width: 120, height: 120 }}>
+                    {currentBranch?.logoUrl ? (
+                      <Image
+                        src={currentBranch.logoUrl}
+                        alt={currentBranch.name}
+                        width={120}
+                        height={120}
+                        className="w-100 h-100 object-fit-cover"
+                      />
+                    ) : (
+                      <div className="avatar-title rounded-circle bg-soft-primary text-primary fs-2 d-flex align-items-center justify-content-center h-100">
+                        {currentBranch?.name?.slice(0, 2).toUpperCase() || 'AC'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="col">
+                  <h4 className="mb-1">{currentBranch?.name}</h4>
+                  <p className="text-muted mb-1">
+                    {currentBranch?.city ? `${currentBranch.city} - ${currentBranch.state}` : 'Sem localização definida'}
                   </p>
-                )}
+                  <div className="d-flex flex-wrap gap-2">
+                    <span className="badge bg-soft-primary text-primary">ID #{String(currentBranch?.idBranch ?? '-').padStart(4, '0')}</span>
+                    <span className="badge bg-soft-secondary text-muted">{currentBranch?.subscriptionPlan ? PLAN_LABELS[currentBranch.subscriptionPlan] : 'Plano indefinido'}</span>
+                  </div>
+                </div>
+                <div className="col-sm-auto text-sm-end">
+                  {isEditing ? (
+                    <div className="d-flex flex-wrap gap-2">
+                      <button className="btn btn-success" disabled={saving} onClick={handleSave}>
+                        <CheckIcon width={16} height={16} className="me-1" />
+                        {saving ? 'Salvando...' : 'Salvar'}
+                      </button>
+                      <button className="btn btn-light" onClick={handleCancel}>
+                        <XMarkIcon width={16} height={16} className="me-1" />
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : (
+                    <button className="btn btn-primary" onClick={() => setIsEditing(true)}>
+                      <PencilIcon width={16} height={16} className="me-1" />
+                      Editar dados
+                    </button>
+                  )}
+                </div>
               </div>
-            </Card.Body>
-          </Card>
-
-          {/* Código */}
-          <Card>
-            <Card.Body title="Código da Academia">
-              <div className="flex items-center justify-between px-3 py-2 mt-2 space-x-2 font-mono text-sm bg-gray-100 border rounded">
-                <span className="overflow-x-auto">{currentBranch?.branchCode}</span>
-                <CopyToClipboard onCopy={copyToClipboard} text={currentBranch?.branchCode}>
-                  <DocumentDuplicateIcon className="w-5 h-5 cursor-pointer hover:text-blue-600 flex-shrink-0" />
-                </CopyToClipboard>
-              </div>
-            </Card.Body>
-          </Card>
-        </div>
-
-        {/* Dados da Academia */}
-        <Card>
-          <Card.Body title="Dados da Academia" subtitle="Informações cadastrais">
-            <div className="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2 lg:grid-cols-3">
-              {/* ID da Academia - Gerado automaticamente */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">ID da Academia</label>
-                <span className="text-gray-900 font-mono">{formatIdBranch(currentBranch?.idBranch)}</span>
-              </div>
-
-              {/* Nome */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Nome</label>
-                {isEditing ? (
-                  <input type="text" name="name" value={formData.name || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.name || '-'}</span>
-                )}
-              </div>
-
-              {/* Nome Interno */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Nome Interno</label>
-                {isEditing ? (
-                  <input type="text" name="internalName" value={formData.internalName || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.internalName || '-'}</span>
-                )}
-              </div>
-
-              {/* CNPJ */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">CNPJ</label>
-                {isEditing ? (
-                  <input type="text" name="cnpj" value={formData.cnpj || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.cnpj || '-'}</span>
-                )}
-              </div>
-
-              {/* Email */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Email</label>
-                {isEditing ? (
-                  <input type="email" name="email" value={formData.email || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.email || '-'}</span>
-                )}
-              </div>
-
-              {/* Telefone */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Telefone</label>
-                {isEditing ? (
-                  <input type="text" name="telephone" value={formData.telephone || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.telephone || '-'}</span>
-                )}
-              </div>
-
-              {/* WhatsApp */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">WhatsApp</label>
-                {isEditing ? (
-                  <input type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.whatsapp || '-'}</span>
-                )}
-              </div>
-
-              {/* Website */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Website</label>
-                {isEditing ? (
-                  <input type="text" name="website" value={formData.website || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.website || '-'}</span>
-                )}
-              </div>
-
-              {/* Slug - Não editável */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Slug</label>
-                <span className="text-gray-900">{currentBranch?.slug || '-'}</span>
-              </div>
-            </div>
-          </Card.Body>
-        </Card>
-
-        {/* Endereço */}
-        <Card className="mt-4">
-          <Card.Body title="Endereço" subtitle="Localização da academia">
-            <div className="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2 lg:grid-cols-3">
-              {/* CEP */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">CEP</label>
-                {isEditing ? (
-                  <input type="text" name="zipCode" value={formData.zipCode || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.zipCode || '-'}</span>
-                )}
-              </div>
-
-              {/* Endereço */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Endereço</label>
-                {isEditing ? (
-                  <input type="text" name="address" value={formData.address || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.address || '-'}</span>
-                )}
-              </div>
-
-              {/* Número */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Número</label>
-                {isEditing ? (
-                  <input type="text" name="number" value={formData.number || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.number || '-'}</span>
-                )}
-              </div>
-
-              {/* Complemento */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Complemento</label>
-                {isEditing ? (
-                  <input type="text" name="complement" value={formData.complement || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.complement || '-'}</span>
-                )}
-              </div>
-
-              {/* Bairro */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Bairro</label>
-                {isEditing ? (
-                  <input type="text" name="neighborhood" value={formData.neighborhood || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.neighborhood || '-'}</span>
-                )}
-              </div>
-
-              {/* Cidade */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Cidade</label>
-                {isEditing ? (
-                  <input type="text" name="city" value={formData.city || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.city || '-'}</span>
-                )}
-              </div>
-
-              {/* Estado */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Estado</label>
-                {isEditing ? (
-                  <input type="text" name="state" value={formData.state || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.state || '-'}</span>
-                )}
-              </div>
-
-              {/* UF */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">UF</label>
-                {isEditing ? (
-                  <input type="text" name="stateShort" value={formData.stateShort || ''} onChange={handleChange}
-                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxLength={2} />
-                ) : (
-                  <span className="text-gray-900">{currentBranch?.stateShort || '-'}</span>
-                )}
-              </div>
-            </div>
-          </Card.Body>
-        </Card>
-
-
-        {/* Informações do Sistema */}
-        <Card className="mt-4">
-          <Card.Body title="Informações do Sistema" subtitle="Dados gerados automaticamente">
-            <div className="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2 lg:grid-cols-4">
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Criado em</label>
-                <span className="text-gray-900">{formatDate(currentBranch?.createdAt)}</span>
-              </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Código de Convite</label>
-                <div className="flex items-center space-x-2">
-                  <span className="text-gray-900 font-mono text-sm">{currentBranch?.inviteCode}</span>
-                  <CopyToClipboard onCopy={copyToClipboard} text={currentBranch?.inviteCode}>
-                    <DocumentDuplicateIcon className="w-4 h-4 cursor-pointer hover:text-blue-600" />
+              <div className="mt-4">
+                <p className="text-muted fw-medium mb-2">Link público</p>
+                <div className="d-flex align-items-center gap-2 flex-wrap">
+                  <div className="bg-light border rounded px-3 py-2 flex-grow-1 text-truncate text-primary">
+                    {academyUrl || 'Nenhum link disponível'}
+                  </div>
+                  <CopyToClipboard text={academyUrl} onCopy={() => copyToClipboard(academyUrl)}>
+                    <button className="btn btn-soft-primary btn-sm">
+                      <DocumentDuplicateIcon width={16} height={16} className="me-1" />
+                      Copiar
+                    </button>
                   </CopyToClipboard>
                 </div>
               </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Latitude</label>
-                <span className="text-gray-900">{currentBranch?.latitude || '-'}</span>
-              </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-medium text-gray-500 uppercase">Longitude</label>
-                <span className="text-gray-900">{currentBranch?.longitude || '-'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-lg-4 col-md-6">
+          <MiniStatCard icon="ti-shield" title="Assinatura">
+            <span className={`badge rounded-pill ${BADGE_CLASSES[currentBranch?.subscriptionStatus] || 'badge-soft-secondary'}`}>
+              {STATUS_LABELS[currentBranch?.subscriptionStatus] || 'Indefinido'}
+            </span>
+            <p className="text-muted mt-2 mb-0">Plano: {PLAN_LABELS[currentBranch?.subscriptionPlan] || '—'}</p>
+            {currentBranch?.subscriptionStatus === 'TRIAL' && currentBranch?.trialEndsAt && (
+              <small className="text-muted">Expira em {formatDate(currentBranch.trialEndsAt)}</small>
+            )}
+          </MiniStatCard>
+        </div>
+        <div className="col-lg-4 col-md-6">
+          <MiniStatCard icon="ti-lock" title="Código da Academia">
+            <div className="d-flex align-items-center justify-content-between bg-light rounded px-3 py-2">
+              <span className="text-dark font-monospace me-2">{currentBranch?.branchCode || '-'}</span>
+              <CopyToClipboard text={currentBranch?.branchCode || ''} onCopy={() => copyToClipboard(currentBranch?.branchCode || '')}>
+                <DocumentDuplicateIcon width={18} height={18} role="button" className="text-primary" />
+              </CopyToClipboard>
+            </div>
+          </MiniStatCard>
+        </div>
+        <div className="col-lg-4 col-md-6">
+          <MiniStatCard icon="ti-user" title="Código de Convite">
+            <div className="d-flex align-items-center justify-content-between bg-light rounded px-3 py-2">
+              <span className="text-dark font-monospace me-2">{currentBranch?.inviteCode || '-'}</span>
+              {currentBranch?.inviteCode && (
+                <CopyToClipboard text={currentBranch.inviteCode} onCopy={() => copyToClipboard(currentBranch.inviteCode)}>
+                  <DocumentDuplicateIcon width={18} height={18} role="button" className="text-primary" />
+                </CopyToClipboard>
+              )}
+            </div>
+          </MiniStatCard>
+        </div>
+
+        <div className="col-12 col-lg-6">
+          <InfoListCard
+            title="Detalhes Comerciais"
+            subtitle="Informações principais"
+            items={commercialItems}
+            isEditing={isEditing}
+            formData={formData}
+            currentBranch={currentBranch}
+            handleChange={handleChange}
+          />
+        </div>
+        <div className="col-12 col-lg-6">
+          <InfoListCard
+            title="Contato"
+            subtitle="Dados de comunicação"
+            items={contactItems}
+            isEditing={isEditing}
+            formData={formData}
+            currentBranch={currentBranch}
+            handleChange={handleChange}
+          />
+        </div>
+
+        <div className="col-12">
+          <InfoListCard
+            title="Endereço"
+            subtitle="Localização completa"
+            items={addressItems}
+            isEditing={isEditing}
+            formData={formData}
+            currentBranch={currentBranch}
+            handleChange={handleChange}
+          />
+        </div>
+
+        <div className="col-12 mb-4">
+          <InfoListCard
+            title="Informações do Sistema"
+            subtitle="Dados automáticos"
+            items={systemItems}
+            isEditing={false}
+            formData={formData}
+            currentBranch={currentBranch}
+            handleChange={handleChange}
+          />
+        </div>
+
+        <div className="col-12 mb-4">
+          <div className="card">
+            <div className="card-body">
+              <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-4">
+                <div className="row flex-grow-1 g-4">
+                  <div className="col-md-3">
+                    <p className="text-muted mb-1">Status de pagamento</p>
+                    <span className={`badge rounded-pill ${BADGE_CLASSES[currentBranch?.subscriptionStatus] || 'badge-soft-secondary'}`}>
+                      {STATUS_LABELS[currentBranch?.subscriptionStatus] || 'Indefinido'}
+                    </span>
+                  </div>
+                  <div className="col-md-3">
+                    <p className="text-muted mb-1">Próxima cobrança</p>
+                    <span className="fw-semibold text-dark">{formatDate(currentBranch?.subscriptionEndsAt)}</span>
+                  </div>
+                  <div className="col-md-3">
+                    <p className="text-muted mb-1">Último pagamento</p>
+                    <span className="fw-semibold text-dark">{formatDateTime(currentBranch?.lastPaymentAt)}</span>
+                  </div>
+                  <div className="col-md-3">
+                    <p className="text-muted mb-1">Assinatura Stripe</p>
+                    <span className="text-muted font-monospace">{currentBranch?.stripeSubscriptionId || '-'}</span>
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <Link href="/account/billing" className="btn btn-outline-primary">
+                    Gerenciar assinatura
+                  </Link>
+                </div>
               </div>
             </div>
-          </Card.Body>
-        </Card>
+          </div>
+        </div>
       </div>
     </AdminHorizontalLayout>
   );
@@ -418,7 +450,7 @@ export const getServerSideProps = async (context) => {
 
   return {
     props: {
-      branch,
+      branch: branch ? JSON.parse(JSON.stringify(branch)) : null,
     },
   };
 };

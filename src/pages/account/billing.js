@@ -155,9 +155,30 @@ const Billing = ({ invoices, products }) => {
 
 export const getServerSideProps = async (context) => {
   const session = await getSession(context);
+  const hasStripeKeys = Boolean(process.env.PAYMENTS_SECRET_KEY);
+
+  if (!hasStripeKeys) {
+    return {
+      props: {
+        invoices: [],
+        products: [],
+      },
+    };
+  }
+
   const customerPayment = await getPayment(session.user?.email);
+
+  if (!customerPayment?.paymentId) {
+    return {
+      props: {
+        invoices: [],
+        products: await getProducts(),
+      },
+    };
+  }
+
   const [invoices, products] = await Promise.all([
-    getInvoices(customerPayment?.paymentId),
+    getInvoices(customerPayment.paymentId),
     getProducts(),
   ]);
   return {

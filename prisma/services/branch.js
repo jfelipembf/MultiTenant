@@ -176,6 +176,8 @@ export const getBranch = async (id, email, slug) =>
             subscriptionPlan: true,
             trialEndsAt: true,
             subscriptionEndsAt: true,
+            lastPaymentAt: true,
+            stripeSubscriptionId: true,
             createdAt: true,
             creator: { select: { email: true } },
             members: {
@@ -183,63 +185,40 @@ export const getBranch = async (id, email, slug) =>
                     email: true,
                     teamRole: true,
                 },
+                where: { deletedAt: null },
             },
         },
         where: {
+            slug,
+            deletedAt: null,
             OR: [
-                { id },
-                {
-                    members: {
-                        some: {
-                            email,
-                            deletedAt: null,
-                        },
-                    },
-                },
+                { creatorId: id },
+                { members: { some: { email, deletedAt: null } } },
             ],
-            AND: {
-                deletedAt: null,
-                slug,
-            },
         },
     });
 
 export const getBranches = async (id, email) =>
     await prisma.branch.findMany({
         select: {
-            createdAt: true,
-            creator: {
-                select: {
-                    email: true,
-                    name: true,
-                },
-            },
-            inviteCode: true,
-            members: {
-                select: {
-                    member: {
-                        select: {
-                            email: true,
-                            image: true,
-                            name: true,
-                        },
-                    },
-                    joinedAt: true,
-                    status: true,
-                    teamRole: true,
-                },
-            },
+            // Campos essenciais para a listagem
+            id: true,
             name: true,
             slug: true,
-            branchCode: true,
+            email: true,
+            logoUrl: true,
             city: true,
             state: true,
             status: true,
-            logoUrl: true,
+            // Campos de subscription para exibir status/plano
+            subscriptionStatus: true,
+            subscriptionPlan: true,
+            // Campos opcionais (removidos: creator, members, inviteCode, branchCode)
+            createdAt: true,
         },
         where: {
             OR: [
-                { id },
+                { creatorId: id },  // Corrigido: usar creatorId ao invés de id
                 {
                     members: {
                         some: {

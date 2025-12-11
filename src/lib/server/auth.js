@@ -7,11 +7,14 @@ import { createPaymentAccount, getPayment } from '@/prisma/services/customer';
 export const authOptions = {
   // Não usar adapter com CredentialsProvider + JWT
   callbacks: {
-    jwt: async ({ token, user }) => {
+    jwt: async ({ token, user, trigger }) => {
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.role = user.role;
+        // Busca subscription apenas no login
+        const customerPayment = await getPayment(user.email);
+        token.subscription = customerPayment?.subscriptionType || null;
       }
       return token;
     },
@@ -19,11 +22,7 @@ export const authOptions = {
       if (token) {
         session.user.userId = token.id;
         session.user.role = token.role;
-
-        const customerPayment = await getPayment(token.email);
-        if (customerPayment) {
-          session.user.subscription = customerPayment.subscriptionType;
-        }
+        session.user.subscription = token.subscription || null;
       }
       return session;
     },

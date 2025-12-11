@@ -174,8 +174,10 @@ model Branch {
   paymentHistory BranchPaymentHistory[]
 
   @@unique([branchCode, inviteCode])
+  @@index([slug])
   @@index([status])
   @@index([subscriptionStatus])
+  @@index([creatorId])
   @@map("branches")
 }
 

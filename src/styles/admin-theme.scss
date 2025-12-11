@@ -1,0 +1,43 @@
+/*
+ * Admin Theme - Painel Swim
+ * Baseado no template Skote/Lexa
+ */
+
+// Bootstrap functions e variables primeiro
+@import "~bootstrap/scss/functions";
+@import "~bootstrap/scss/variables";
+
+// Variables do Admin (sobrescreve Bootstrap)
+@import "../assets/scss/variables";
+@import "../assets/scss/variables-dark";
+@import "../assets/scss/theme-color";
+
+// Bootstrap completo
+@import "~bootstrap/scss/bootstrap";
+
+// Fonts
+@import "../assets/scss/custom/fonts/fonts";
+
+// Icons
+@import "../assets/scss/custom/plugins/icons/_themify-icons.scss";
+
+// Structure
+@import "../assets/scss/custom/structure/general";
+@import "../assets/scss/custom/structure/topbar";
+@import "../assets/scss/custom/structure/page-head";
+@import "../assets/scss/custom/structure/footer";
+@import "../assets/scss/custom/structure/horizontal-nav";
+@import "../assets/scss/custom/structure/layouts";
+
+// Components
+@import "../assets/scss/custom/components/root";
+@import "../assets/scss/custom/components/avatar";
+@import "../assets/scss/custom/components/helper";
+@import "../assets/scss/custom/components/forms";
+@import "../assets/scss/custom/components/buttons";
+@import "../assets/scss/custom/components/card";
+@import "../assets/scss/custom/components/dropdown";
+@import "../assets/scss/custom/components/nav";
+@import "../assets/scss/custom/components/badge";
+@import "../assets/scss/custom/components/table";
+@import "../assets/scss/custom/components/reboot";

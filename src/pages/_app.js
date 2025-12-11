@@ -13,7 +13,7 @@ import swrConfig from '@/config/swr/index';
 import BranchProvider from '@/providers/branch';
 
 import '@/styles/globals.css';
-import '@/styles/admin-layout.css';
+import '@/styles/admin-theme.scss';
 let rawdata = require('../messages/pt.json');
 
 let langCode = "pt"

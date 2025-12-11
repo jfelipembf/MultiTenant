@@ -7,17 +7,17 @@ import toast, { Toaster } from 'react-hot-toast';
 import Card from '@/components/Card/index';
 import Button from '@/components/Button';
 import api from '@/lib/common/api';
-import { getInvitation } from '@/prisma/services/workspace';
+import { getInvitation } from '@/prisma/services/branch';
 
-const Invite = ({ workspace }) => {
+const Invite = ({ branch }) => {
   const { data } = useSession();
   const router = useRouter();
   const [isSubmitting, setSubmittingState] = useState(false);
 
   const join = () => {
     setSubmittingState(true);
-    api(`/api/workspace/team/join`, {
-      body: { workspaceCode: workspace.workspaceCode },
+    api(`/api/branch/team/join`, {
+      body: { branchCode: branch?.branchCode },
       method: 'POST',
     }).then((response) => {
       setSubmittingState(false);
@@ -31,7 +31,7 @@ const Invite = ({ workspace }) => {
           toast.error(response.errors[error].msg)
         );
       } else {
-        toast.success('Accepted invitation!');
+        toast.success('Convite aceito!');
       }
     });
   };
@@ -44,8 +44,8 @@ const Invite = ({ workspace }) => {
           <div className="flex flex-col items-center justify-center mx-auto">
             <Card>
               <Card.Body
-                title={workspace.name}
-                subtitle="You are invited to join this workspace."
+                title={branch?.name || 'Academia'}
+                subtitle="Você foi convidado para participar desta academia."
               />
               <Card.Footer>
                 {data ? (
@@ -54,14 +54,14 @@ const Invite = ({ workspace }) => {
                     disabled={isSubmitting}
                     onClick={join}
                   >
-                    Join Workspace
+                    Entrar na Academia
                   </Button>
                 ) : (
                   <Link
                     href="/auth/login"
                     className="flex items-center justify-center px-5 py-2 space-x-3 text-white bg-blue-600 rounded hover:bg-blue-500"
                   >
-                    Create an account
+                    Criar uma conta
                   </Link>
                 )}
               </Card.Footer>
@@ -75,8 +75,8 @@ const Invite = ({ workspace }) => {
 
 export const getServerSideProps = async (context) => {
   const { code } = context.query;
-  const workspace = await getInvitation(code);
-  return { props: { workspace } };
+  const branch = await getInvitation(code);
+  return { props: { branch } };
 };
 
 export default Invite;

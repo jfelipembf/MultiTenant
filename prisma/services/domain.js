@@ -18,7 +18,7 @@ export const createDomain = async (
     verificationValue = value;
   }
 
-  const workspace = await prisma.workspace.findFirst({
+  const branch = await prisma.branch.findFirst({
     select: { id: true },
     where: {
       OR: [
@@ -45,13 +45,13 @@ export const createDomain = async (
       subdomain,
       value: verificationValue,
       verified,
-      workspaceId: workspace.id,
+      branchId: branch.id,
     },
   });
 };
 
 export const deleteDomain = async (id, email, slug, name) => {
-  const workspace = await prisma.workspace.findFirst({
+  const branch = await prisma.branch.findFirst({
     select: { id: true },
     where: {
       OR: [
@@ -76,7 +76,7 @@ export const deleteDomain = async (id, email, slug, name) => {
     where: {
       deletedAt: null,
       name,
-      workspaceId: workspace.id,
+      branchId: branch.id,
     },
   });
   await prisma.domain.update({
@@ -95,15 +95,31 @@ export const getDomains = async (slug) =>
     },
     where: {
       deletedAt: null,
-      workspace: {
+      branch: {
         deletedAt: null,
         slug,
       },
     },
   });
 
+export const checkDomain = async (domainName) => {
+  const domain = await prisma.domain.findFirst({
+    select: {
+      name: true,
+      verified: true,
+      subdomain: true,
+      value: true,
+    },
+    where: {
+      deletedAt: null,
+      name: domainName,
+    },
+  });
+  return domain || { verified: false };
+};
+
 export const verifyDomain = async (id, email, slug, name, verified) => {
-  const workspace = await prisma.workspace.findFirst({
+  const branch = await prisma.branch.findFirst({
     select: { id: true },
     where: {
       OR: [
@@ -128,7 +144,7 @@ export const verifyDomain = async (id, email, slug, name, verified) => {
     where: {
       deletedAt: null,
       name,
-      workspaceId: workspace.id,
+      branchId: branch.id,
     },
   });
   await prisma.domain.update({
