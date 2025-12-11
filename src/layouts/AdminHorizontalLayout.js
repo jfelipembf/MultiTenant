@@ -46,7 +46,7 @@ const AdminHorizontalLayout = ({ children, title = 'Painel Swim', subtitle = '' 
                                 <Link href="/account" className="logo logo-dark">
                                     <span className="logo-lg">
                                         <Image
-                                            src="/images/logoswim.png"
+                                            src="/images/logoSwim.png"
                                             alt="Painel Swim"
                                             width={140}
                                             height={35}
