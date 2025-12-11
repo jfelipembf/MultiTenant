@@ -6,7 +6,6 @@ import { Toaster } from 'react-hot-toast';
 
 import menu from '@/config/menu/index';
 import { useBranch } from '@/providers/branch';
-import '@/styles/admin-layout.css';
 
 const AdminHorizontalLayout = ({ children, title = 'Painel Swim' }) => {
     const { status, data } = useSession();
