@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model Account {
@@ -160,13 +161,39 @@ model Branch {
   deletedAt    DateTime?
   updatedAt    DateTime?    @updatedAt
 
-  creator User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  members Member[]
-  domains Domain[]
+  // Campos de assinatura/pagamento
+  subscriptionStatus SubscriptionStatus @default(TRIAL)
+  subscriptionPlan   SubscriptionPlan   @default(BASIC)
+  stripeCustomerId   String?            @unique
+  stripeSubscriptionId String?          @unique
+  trialEndsAt        DateTime?
+  subscriptionEndsAt DateTime?
+  lastPaymentAt      DateTime?
+
+  creator        User                   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  members        Member[]
+  domains        Domain[]
+  paymentHistory BranchPaymentHistory[]
 
   @@unique([branchCode, inviteCode])
   @@index([status])
+  @@index([subscriptionStatus])
   @@map("branches")
+}
+
+model BranchPaymentHistory {
+  id              String   @id @default(cuid())
+  branchId        String
+  stripePaymentId String?
+  amount          Int      // em centavos
+  currency        String   @default("BRL")
+  status          String   // succeeded, failed, pending
+  description     String?
+  createdAt       DateTime @default(now())
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@map("branchPaymentHistory")
 }
 
 enum InvitationStatus {
@@ -195,4 +222,18 @@ enum BranchStatus {
   ACTIVE
   INACTIVE
   SUSPENDED
+}
+
+enum SubscriptionStatus {
+  TRIAL       // Período de teste
+  ACTIVE      // Assinatura ativa
+  PAST_DUE    // Pagamento atrasado (ainda com acesso)
+  SUSPENDED   // Suspenso por falta de pagamento
+  CANCELLED   // Cancelado pela academia
+}
+
+enum SubscriptionPlan {
+  BASIC       // Plano básico
+  PRO         // Plano profissional
+  ENTERPRISE  // Plano empresarial
 }

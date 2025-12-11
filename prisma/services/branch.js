@@ -8,12 +8,19 @@ export const countBranches = async (slug) =>
         where: { slug: { startsWith: slug } },
     });
 
+// Dias de trial gratuito
+const TRIAL_DAYS = 14;
+
 export const createBranch = async (creatorId, email, name, slug, data = {}) => {
     const count = await countBranches(slug);
 
     if (count > 0) {
         slug = `${slug}-${count}`;
     }
+
+    // Calcula data de fim do trial
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
 
     const branch = await prisma.branch.create({
         data: {
@@ -28,6 +35,8 @@ export const createBranch = async (creatorId, email, name, slug, data = {}) => {
             },
             name,
             slug,
+            subscriptionStatus: 'TRIAL',
+            trialEndsAt,
             ...data,
         },
     });
@@ -97,6 +106,9 @@ export const getSiteBranch = async (slug, customDomain) =>
             name: true,
             slug: true,
             logoUrl: true,
+            telephone: true,
+            subscriptionStatus: true,
+            trialEndsAt: true,
             domains: { select: { name: true } },
         },
         where: {
