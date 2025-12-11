@@ -7,7 +7,7 @@ import { Toaster } from 'react-hot-toast';
 import menu from '@/config/menu/index';
 import { useBranch } from '@/providers/branch';
 
-const AdminHorizontalLayout = ({ children, title = 'Painel Swim' }) => {
+const AdminHorizontalLayout = ({ children, title = 'Painel Swim', subtitle = '' }) => {
     const { status, data } = useSession();
     const router = useRouter();
     const { branch } = useBranch();
@@ -41,7 +41,7 @@ const AdminHorizontalLayout = ({ children, title = 'Painel Swim' }) => {
                 <div className="top-navigation">
                     <div className="page-title-content">
                         <h1>{title}</h1>
-                        <p>Gerencie academias, assinaturas e configurações globais</p>
+                        {subtitle && <p>{subtitle}</p>}
                     </div>
                     <nav className="admin-navbar">
                         {navigation.map((section) => (

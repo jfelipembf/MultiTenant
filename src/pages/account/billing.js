@@ -6,10 +6,9 @@ import toast from 'react-hot-toast';
 
 import Button from '@/components/Button/index';
 import Card from '@/components/Card/index';
-import Content from '@/components/Content/index';
 import Meta from '@/components/Meta/index';
 import Modal from '@/components/Modal/index';
-import { AccountLayout } from '@/layouts/index';
+import { AdminHorizontalLayout } from '@/layouts/index';
 import api from '@/lib/common/api';
 import { redirectToCheckout } from '@/lib/client/stripe';
 import { getInvoices, getProducts } from '@/lib/server/stripe';
@@ -39,14 +38,9 @@ const Billing = ({ invoices, products }) => {
   const toggleModal = () => setModalVisibility(!showModal);
 
   return (
-    <AccountLayout>
-      <Meta title="Nextacular - Billing" />
-      <Content.Title
-        title="Billing"
-        subtitle="Manage your billing and preferences"
-      />
-      <Content.Divider />
-      <Content.Container>
+    <AdminHorizontalLayout title="Faturamento" subtitle="Gerencie suas assinaturas e pagamentos">
+      <Meta title="Painel Swim - Faturamento" />
+      <div className="space-y-6">
         <Card>
           <Card.Body
             title="Upgrade Plan"
@@ -100,67 +94,62 @@ const Billing = ({ invoices, products }) => {
             ))}
           </div>
         </Modal>
-      </Content.Container>
-      <Content.Divider thick />
-      <Content.Title
-        title="Invoices"
-        subtitle="View and download invoices you may need"
-      />
-      <Content.Divider />
-      {invoices.length > 0 ? (
-        <Content.Container>
-          <table className="table-auto">
-            <thead>
-              <tr className="text-left">
-                <th>Invoice Number</th>
-                <th>Created</th>
-                <th>Status</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {invoices.map((invoice, index) => (
-                <tr key={index} className="text-sm hover:bg-gray-100">
-                  <td className="px-3 py-5">
-                    <Link
-                      href={invoice.hosted_invoice_url}
-                      className="text-blue-600"
-                      target="_blank"
-                    >
-                      {invoice.number}
-                    </Link>
-                  </td>
-                  <td className="py-5">
-                    {formatDistance(
-                      new Date(invoice.created * 1000),
-                      new Date(),
-                      {
-                        addSuffix: true,
-                      }
-                    )}
-                  </td>
-                  <td className="py-5">{invoice.status}</td>
-                  <td className="py-5">
-                    <Link
-                      href={invoice.hosted_invoice_url}
-                      className="text-blue-600"
-                      target="_blank"
-                    >
-                      &rarr;
-                    </Link>
-                  </td>
+        {/* Seção de Faturas */}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Faturas</h2>
+          {invoices.length > 0 ? (
+            <table className="table-auto">
+              <thead>
+                <tr className="text-left">
+                  <th>Invoice Number</th>
+                  <th>Created</th>
+                  <th>Status</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </Content.Container>
-      ) : (
-        <Content.Empty>
-          Once you&apos;ve paid for something on Nextacular, invoices will show
-          up here
-        </Content.Empty>
-      )}
-    </AccountLayout>
+              </thead>
+              <tbody>
+                {invoices.map((invoice, index) => (
+                  <tr key={index} className="text-sm hover:bg-gray-100">
+                    <td className="px-3 py-5">
+                      <Link
+                        href={invoice.hosted_invoice_url}
+                        className="text-blue-600"
+                        target="_blank"
+                      >
+                        {invoice.number}
+                      </Link>
+                    </td>
+                    <td className="py-5">
+                      {formatDistance(
+                        new Date(invoice.created * 1000),
+                        new Date(),
+                        {
+                          addSuffix: true,
+                        }
+                      )}
+                    </td>
+                    <td className="py-5">{invoice.status}</td>
+                    <td className="py-5">
+                      <Link
+                        href={invoice.hosted_invoice_url}
+                        className="text-blue-600"
+                        target="_blank"
+                      >
+                        &rarr;
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="flex items-center justify-center p-5 bg-gray-100 border-4 border-dashed rounded">
+              <p>Quando você pagar por algo no Painel Swim, as faturas aparecerão aqui</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </AdminHorizontalLayout>
   );
 };
 

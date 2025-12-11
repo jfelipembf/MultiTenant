@@ -9,9 +9,8 @@ import isSlug from 'validator/lib/isSlug';
 
 import Button from '@/components/Button/index';
 import Card from '@/components/Card/index';
-import Content from '@/components/Content/index';
 import Meta from '@/components/Meta/index';
-import { AccountLayout } from '@/layouts/index';
+import { AdminHorizontalLayout } from '@/layouts/index';
 import api from '@/lib/common/api';
 import { useBranch } from '@/providers/branch';
 import { getBranch, isBranchOwner } from '@/prisma/services/branch';
@@ -86,14 +85,9 @@ const General = ({ isTeamOwner, branch }) => {
   if (!branch) return null;
 
   return (
-    <AccountLayout>
+    <AdminHorizontalLayout title="Informações da Academia" subtitle="Gerencie os detalhes e informações da sua academia">
       <Meta title={`Painel Swim - ${branch.name} | Configurações`} />
-      <Content.Title
-        title="Informações da Academia"
-        subtitle="Gerencie os detalhes e informações da sua academia"
-      />
-      <Content.Divider />
-      <Content.Container>
+      <div className="space-y-6">
         <Card>
           <Card.Body
             title="Nome da Academia"
@@ -169,8 +163,8 @@ const General = ({ isTeamOwner, branch }) => {
             </div>
           </Card.Body>
         </Card>
-      </Content.Container>
-    </AccountLayout>
+      </div>
+    </AdminHorizontalLayout>
   );
 };
 

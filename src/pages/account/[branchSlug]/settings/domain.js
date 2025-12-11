@@ -9,17 +9,16 @@ import isFQDN from 'validator/lib/isFQDN';
 import Button from '@/components/Button/index';
 import DomainCard from '@/components/Card/domain';
 import Card from '@/components/Card/index';
-import Content from '@/components/Content/index';
 import Meta from '@/components/Meta/index';
 import { useDomains } from '@/hooks/data';
-import { AccountLayout } from '@/layouts/index';
+import { AdminHorizontalLayout } from '@/layouts/index';
 import api from '@/lib/common/api';
-import { getWorkspace, isWorkspaceOwner } from '@/prisma/services/workspace';
+import { getBranch, isBranchOwner } from '@/prisma/services/branch';
 import { useTranslation } from "react-i18next";
 
-const Domain = ({ isTeamOwner, workspace }) => {
+const Domain = ({ isTeamOwner, branch }) => {
   const { t } = useTranslation();
-  const { data, isLoading } = useDomains(workspace.slug);
+  const { data, isLoading } = useDomains(branch?.slug);
   const [domain, setDomain] = useState('');
   const [isSubmitting, setSubmittingState] = useState(false);
   const validDomainName = isFQDN(domain);
@@ -27,7 +26,7 @@ const Domain = ({ isTeamOwner, workspace }) => {
   const addDomain = (event) => {
     event.preventDefault();
     setSubmittingState(true);
-    api(`/api/workspace/${workspace.slug}/domain`, {
+    api(`/api/branch/${branch?.slug}/domain`, {
       body: { domainName: domain },
       method: 'POST',
     }).then((response) => {
@@ -39,7 +38,7 @@ const Domain = ({ isTeamOwner, workspace }) => {
         );
       } else {
         setDomain('');
-        toast.success('Domain successfully added to workspace!');
+        toast.success('Domínio adicionado com sucesso!');
       }
     });
   };
@@ -50,11 +49,11 @@ const Domain = ({ isTeamOwner, workspace }) => {
     setSubmittingState(true);
 
     if (verified) {
-      mutate(`/api/workspace/domain/check?domain=${domain}`).then(() =>
+      mutate(`/api/branch/domain/check?domain=${domain}`).then(() =>
         setSubmittingState(false)
       );
     } else {
-      api(`/api/workspace/${workspace.slug}/domain`, {
+      api(`/api/branch/${branch?.slug}/domain`, {
         body: { domainName: domain },
         method: 'PUT',
       }).then((response) => {
@@ -65,7 +64,7 @@ const Domain = ({ isTeamOwner, workspace }) => {
             toast.error(response.errors[error].msg)
           );
         } else {
-          toast.success('Domain successfully verified!');
+          toast.success('Domínio verificado com sucesso!');
         }
       });
     }
@@ -74,7 +73,7 @@ const Domain = ({ isTeamOwner, workspace }) => {
   };
 
   const remove = (domain) => {
-    api(`/api/workspace/${workspace.slug}/domain`, {
+    api(`/api/branch/${branch?.slug}/domain`, {
       body: { domainName: domain },
       method: 'DELETE',
     }).then((response) => {
@@ -83,20 +82,17 @@ const Domain = ({ isTeamOwner, workspace }) => {
           toast.error(response.errors[error].msg)
         );
       } else {
-        toast.success('Domain successfully deleted from workspace!');
+        toast.success('Domínio removido com sucesso!');
       }
     });
   };
 
+  if (!branch) return null;
+
   return (
-    <AccountLayout>
-      <Meta title={`Nextacular - ${workspace.name} | Domains`} />
-      <Content.Title
-        title={t("settings.domain.subdomain.management")}
-        subtitle={t("settings.domain.subdomain.management.description")}
-      />
-      <Content.Divider />
-      <Content.Container>
+    <AdminHorizontalLayout title={t("settings.domain.subdomain.management")} subtitle={t("settings.domain.subdomain.management.description")}>
+      <Meta title={`Painel Swim - ${branch.name} | Domínios`} />
+      <div className="space-y-6">
         <Card>
           <Card.Body
             title={t("settings.domain.subdomain.title")}
@@ -104,25 +100,17 @@ const Domain = ({ isTeamOwner, workspace }) => {
           >
             <div className="flex items-center justify-between px-3 py-2 font-mono text-sm border rounded md:w-1/2">
               <div>
-                <strong>{workspace.slug}</strong>
-                <span className="pr-3">.{workspace.host}</span>
+                <strong>{branch.slug}</strong>
+                <span className="pr-3">.{branch.host}</span>
               </div>
-              <Link href={`http://${workspace.hostname}`} target="_blank">
+              <Link href={`http://${branch.hostname}`} target="_blank">
                 <ArrowTopRightOnSquareIcon className="w-5 h-5 cursor-pointer hover:text-blue-600" />
               </Link>
             </div>
           </Card.Body>
         </Card>
-      </Content.Container>
-      {isTeamOwner && (
-        <>
-          <Content.Divider thick />
-          <Content.Title
-            title={t("settings.domain.domain.configuration")}
-            subtitle={t("settings.domain.domain.configuration.description")}
-          />
-          <Content.Divider />
-          <Content.Container>
+        {isTeamOwner && (
+          <>
             <Card>
               <form>
                 <Card.Body
@@ -157,7 +145,7 @@ const Domain = ({ isTeamOwner, workspace }) => {
                 <DomainCard
                   key={index}
                   apex={process.env.NEXT_PUBLIC_VERCEL_IP_ADDRESS}
-                  cname={workspace.hostname}
+                  cname={branch.hostname}
                   isLoading={isSubmitting}
                   domain={domain}
                   refresh={refresh}
@@ -165,41 +153,41 @@ const Domain = ({ isTeamOwner, workspace }) => {
                 />
               ))
             ) : (
-              <Content.Empty>
-                {t("settings.domain.empty.message")}
-              </Content.Empty>
+              <div className="flex items-center justify-center p-5 bg-gray-100 border-4 border-dashed rounded">
+                <p>{t("settings.domain.empty.message")}</p>
+              </div>
             )}
-          </Content.Container>
-        </>
-      )}
-    </AccountLayout>
+          </>
+        )}
+      </div>
+    </AdminHorizontalLayout>
   );
 };
 
 export const getServerSideProps = async (context) => {
   const session = await getSession(context);
   let isTeamOwner = false;
-  let workspace = null;
+  let branch = null;
 
   if (session) {
-    workspace = await getWorkspace(
+    branch = await getBranch(
       session.user.userId,
       session.user.email,
-      context.params.workspaceSlug
+      context.params.branchSlug
     );
 
-    if (workspace) {
+    if (branch) {
       const { host } = new URL(process.env.APP_URL);
-      isTeamOwner = isWorkspaceOwner(session.user.email, workspace);
-      workspace.host = host;
-      workspace.hostname = `${workspace.slug}.${host}`;
+      isTeamOwner = isBranchOwner(session.user.email, branch);
+      branch.host = host;
+      branch.hostname = `${branch.slug}.${host}`;
     }
   }
 
   return {
     props: {
       isTeamOwner,
-      workspace,
+      branch,
     },
   };
 };

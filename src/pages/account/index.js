@@ -4,10 +4,9 @@ import toast from 'react-hot-toast';
 
 import Button from '@/components/Button/index';
 import Card from '@/components/Card/index';
-import Content from '@/components/Content/index';
 import Meta from '@/components/Meta/index';
 import { useInvitations, useBranches } from '@/hooks/data/index';
-import { AccountLayout } from '@/layouts/index';
+import { AdminHorizontalLayout } from '@/layouts/index';
 import api from '@/lib/common/api';
 import { useBranch } from '@/providers/branch';
 
@@ -62,88 +61,84 @@ const Welcome = () => {
   };
 
   return (
-    <AccountLayout>
+    <AdminHorizontalLayout title="Painel Swim" subtitle="Gerencie suas academias de natação">
       <Meta title="Painel Swim - Dashboard" />
-      <Content.Title
-        title="Painel Swim"
-        subtitle="Gerencie suas academias de natação"
-      />
-      <Content.Divider />
-      <Content.Container>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-          {isFetchingBranches ? (
-            <Card>
-              <Card.Body />
-              <Card.Footer />
-            </Card>
-          ) : branchesData?.branches?.length > 0 ? (
-            branchesData.branches.map((branch, index) => (
-              <Card key={index}>
-                <Card.Body
-                  title={branch.name}
-                  subtitle={branch.city ? `${branch.city} - ${branch.state}` : 'Sem localização'}
-                />
-                <Card.Footer>
-                  <button
-                    className="text-blue-600"
-                    onClick={() => navigate(branch)}
-                  >
-                    Acessar academia &rarr;
-                  </button>
-                </Card.Footer>
+      <div className="space-y-8">
+        {/* Seção de Academias */}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Minhas Academias</h2>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            {isFetchingBranches ? (
+              <Card>
+                <Card.Body />
+                <Card.Footer />
               </Card>
-            ))
-          ) : (
-            <Card.Empty>Comece criando uma academia agora</Card.Empty>
-          )}
+            ) : branchesData?.branches?.length > 0 ? (
+              branchesData.branches.map((branch, index) => (
+                <Card key={index}>
+                  <Card.Body
+                    title={branch.name}
+                    subtitle={branch.city ? `${branch.city} - ${branch.state}` : 'Sem localização'}
+                  />
+                  <Card.Footer>
+                    <button
+                      className="text-blue-600"
+                      onClick={() => navigate(branch)}
+                    >
+                      Acessar academia &rarr;
+                    </button>
+                  </Card.Footer>
+                </Card>
+              ))
+            ) : (
+              <Card.Empty>Comece criando uma academia agora</Card.Empty>
+            )}
+          </div>
         </div>
-      </Content.Container>
-      <Content.Divider thick />
-      <Content.Title
-        title="Convites"
-        subtitle="Convites recebidos pela sua conta"
-      />
-      <Content.Divider />
-      <Content.Container>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-          {isFetchingInvitations ? (
-            <Card>
-              <Card.Body />
-              <Card.Footer />
-            </Card>
-          ) : invitationsData?.invitations?.length > 0 ? (
-            invitationsData.invitations.map((invitation, index) => (
-              <Card key={index}>
-                <Card.Body
-                  title={invitation.branch?.name || 'Academia'}
-                  subtitle={`Convidado por ${invitation.invitedBy?.name || invitation.invitedBy?.email || 'Desconhecido'}`}
-                />
-                <Card.Footer>
-                  <Button
-                    className="text-white bg-blue-600 hover:bg-blue-500"
-                    disabled={isSubmitting}
-                    onClick={() => accept(invitation.id)}
-                  >
-                    Aceitar
-                  </Button>
-                  <Button
-                    className="text-red-600 border border-red-600 hover:bg-red-600 hover:text-white"
-                    disabled={isSubmitting}
-                    onClick={() => decline(invitation.id)}
-                  >
-                    Recusar
-                  </Button>
-                </Card.Footer>
+
+        {/* Seção de Convites */}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Convites Recebidos</h2>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            {isFetchingInvitations ? (
+              <Card>
+                <Card.Body />
+                <Card.Footer />
               </Card>
-            ))
-          ) : (
-            <Card.Empty>
-              Você ainda não recebeu convites para nenhuma academia.
-            </Card.Empty>
-          )}
+            ) : invitationsData?.invitations?.length > 0 ? (
+              invitationsData.invitations.map((invitation, index) => (
+                <Card key={index}>
+                  <Card.Body
+                    title={invitation.branch?.name || 'Academia'}
+                    subtitle={`Convidado por ${invitation.invitedBy?.name || invitation.invitedBy?.email || 'Desconhecido'}`}
+                  />
+                  <Card.Footer>
+                    <Button
+                      className="text-white bg-blue-600 hover:bg-blue-500"
+                      disabled={isSubmitting}
+                      onClick={() => accept(invitation.id)}
+                    >
+                      Aceitar
+                    </Button>
+                    <Button
+                      className="text-red-600 border border-red-600 hover:bg-red-600 hover:text-white"
+                      disabled={isSubmitting}
+                      onClick={() => decline(invitation.id)}
+                    >
+                      Recusar
+                    </Button>
+                  </Card.Footer>
+                </Card>
+              ))
+            ) : (
+              <Card.Empty>
+                Você ainda não recebeu convites para nenhuma academia.
+              </Card.Empty>
+            )}
+          </div>
         </div>
-      </Content.Container>
-    </AccountLayout>
+      </div>
+    </AdminHorizontalLayout>
   );
 };
 

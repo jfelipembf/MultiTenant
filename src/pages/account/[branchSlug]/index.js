@@ -4,11 +4,10 @@ import { CopyToClipboard } from 'react-copy-to-clipboard';
 import toast from 'react-hot-toast';
 import { getSession } from 'next-auth/react';
 
-import Content from '@/components/Content/index';
 import Meta from '@/components/Meta/index';
 import Card from '@/components/Card/index';
 import Button from '@/components/Button/index';
-import { AccountLayout } from '@/layouts/index';
+import { AdminHorizontalLayout } from '@/layouts/index';
 import { useBranch } from '@/providers/branch';
 import { getBranch } from '@/prisma/services/branch';
 import api from '@/lib/common/api';
@@ -100,14 +99,9 @@ const BranchDashboard = ({ branch: branchData }) => {
   if (!currentBranch) return null;
 
   return (
-    <AccountLayout>
+    <AdminHorizontalLayout title={currentBranch?.name || 'Academia'} subtitle="Visualize e edite os dados da academia">
       <Meta title={`Painel Swim - ${currentBranch?.name || 'Academia'}`} />
-      <Content.Title
-        title={currentBranch?.name || 'Academia'}
-        subtitle="Visualize e edite os dados da academia"
-      />
-      <Content.Divider />
-      <Content.Container>
+      <div className="space-y-6">
         {/* Ações */}
         <div className="flex justify-end mb-4 space-x-2">
           {isEditing ? (
@@ -405,8 +399,8 @@ const BranchDashboard = ({ branch: branchData }) => {
             </div>
           </Card.Body>
         </Card>
-      </Content.Container>
-    </AccountLayout>
+      </div>
+    </AdminHorizontalLayout>
   );
 };
 

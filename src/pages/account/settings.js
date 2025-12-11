@@ -7,10 +7,9 @@ import isEmail from 'validator/lib/isEmail';
 
 import Button from '@/components/Button/index';
 import Card from '@/components/Card/index';
-import Content from '@/components/Content/index';
 import Meta from '@/components/Meta';
 import Modal from '@/components/Modal/index';
-import { AccountLayout } from '@/layouts/index';
+import { AdminHorizontalLayout } from '@/layouts/index';
 import api from '@/lib/common/api';
 import { getUser } from '@/prisma/services/user';
 import { useTranslation } from "react-i18next";
@@ -105,14 +104,9 @@ const Settings = ({ user }) => {
   };
 
   return (
-    <AccountLayout>
-      <Meta title="Nextacular - Account Settings" />
-      <Content.Title
-        title={t("settings.header.title")}
-        subtitle={t("settings.header.description")}
-      />
-      <Content.Divider />
-      <Content.Container>
+    <AdminHorizontalLayout title={t("settings.header.title")} subtitle={t("settings.header.description")}>
+      <Meta title="Painel Swim - Configurações da Conta" />
+      <div className="space-y-6">
         <Card>
           <form>
             <Card.Body
@@ -228,8 +222,8 @@ const Settings = ({ user }) => {
             </div>
           </Modal>
         </Card>
-      </Content.Container>
-    </AccountLayout>
+      </div>
+    </AdminHorizontalLayout>
   );
 };
 

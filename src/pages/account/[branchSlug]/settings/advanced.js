@@ -6,8 +6,7 @@ import Button from '@/components/Button/index';
 import Meta from '@/components/Meta/index';
 import Modal from '@/components/Modal/index';
 import Card from '@/components/Card/index';
-import Content from '@/components/Content/index';
-import { AccountLayout } from '@/layouts/index';
+import { AdminHorizontalLayout } from '@/layouts/index';
 import api from '@/lib/common/api';
 import { useBranch } from '@/providers/branch';
 import { getSession } from 'next-auth/react';
@@ -50,14 +49,9 @@ const Advanced = ({ isCreator }) => {
   };
 
   return (
-    <AccountLayout>
+    <AdminHorizontalLayout title="Configurações Avançadas" subtitle="Gerencie as configurações da academia">
       <Meta title={`Painel Swim - ${branch?.name} | Configurações Avançadas`} />
-      <Content.Title
-        title="Configurações Avançadas"
-        subtitle="Gerencie as configurações da academia"
-      />
-      <Content.Divider />
-      <Content.Container>
+      <div className="space-y-6">
         <Card danger>
           <Card.Body
             title="Excluir Academia"
@@ -118,8 +112,8 @@ const Advanced = ({ isCreator }) => {
             </div>
           </Modal>
         </Card>
-      </Content.Container>
-    </AccountLayout>
+      </div>
+    </AdminHorizontalLayout>
   );
 };
 

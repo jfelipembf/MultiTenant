@@ -15,19 +15,18 @@ import isEmail from 'validator/lib/isEmail';
 
 import Button from '@/components/Button/index';
 import Card from '@/components/Card/index';
-import Content from '@/components/Content/index';
 import Meta from '@/components/Meta/index';
 import { useMembers } from '@/hooks/data';
-import { AccountLayout } from '@/layouts/index';
+import { AdminHorizontalLayout } from '@/layouts/index';
 import api from '@/lib/common/api';
-import { getWorkspace, isWorkspaceOwner } from '@/prisma/services/workspace';
+import { getBranch, isBranchOwner } from '@/prisma/services/branch';
 import { useTranslation } from "react-i18next";
 
 const MEMBERS_TEMPLATE = { email: '', role: TeamRole.MEMBER };
 
-const Team = ({ isTeamOwner, workspace }) => {
+const Team = ({ isTeamOwner, branch }) => {
   const { t } = useTranslation();
-  const { data, isLoading } = useMembers(workspace.slug);
+  const { data, isLoading } = useMembers(branch?.slug);
   const [isSubmitting, setSubmittingState] = useState(false);
   const [members, setMembers] = useState([{ ...MEMBERS_TEMPLATE }]);
   const validateEmails =
@@ -39,7 +38,7 @@ const Team = ({ isTeamOwner, workspace }) => {
   };
 
   const changeRole = (memberId) => {
-    api(`/api/workspace/team/role`, {
+    api(`/api/branch/team/role`, {
       body: { memberId },
       method: 'PUT',
     }).then((response) => {
@@ -69,7 +68,7 @@ const Team = ({ isTeamOwner, workspace }) => {
 
   const invite = () => {
     setSubmittingState(true);
-    api(`/api/workspace/${workspace.slug}/invite`, {
+    api(`/api/branch/${branch?.slug}/invite`, {
       body: { members },
       method: 'POST',
     }).then((response) => {
@@ -82,7 +81,7 @@ const Team = ({ isTeamOwner, workspace }) => {
       } else {
         const members = [{ ...MEMBERS_TEMPLATE }];
         setMembers([...members]);
-        toast.success('Invited team members!');
+        toast.success('Membros convidados!');
       }
     });
   };
@@ -93,7 +92,7 @@ const Team = ({ isTeamOwner, workspace }) => {
   };
 
   const removeMember = (memberId) => {
-    api(`/api/workspace/team/member`, {
+    api(`/api/branch/team/member`, {
       body: { memberId },
       method: 'DELETE',
     }).then((response) => {
@@ -102,30 +101,27 @@ const Team = ({ isTeamOwner, workspace }) => {
           toast.error(response.errors[error].msg)
         );
       } else {
-        toast.success('Removed team member from workspace!');
+        toast.success('Membro removido da academia!');
       }
     });
   };
 
+  if (!branch) return null;
+
   return (
-    <AccountLayout>
-      <Meta title={`Nextacular - ${workspace.name} | Team Management`} />
-      <Content.Title
-        title={t("settings.team.management")}
-        subtitle={t("settings.team.manage.members")}
-      />
-      <Content.Divider />
-      <Content.Container>
+    <AdminHorizontalLayout title={t("settings.team.management")} subtitle={t("settings.team.manage.members")}>
+      <Meta title={`Painel Swim - ${branch.name} | Equipe`} />
+      <div className="space-y-6">
         <Card>
           <Card.Body
             title={t("settings.team.invite.link")}
             subtitle={t("settings.team.invite.link.description")}
           >
             <div className="flex items-center justify-between px-3 py-2 space-x-5 font-mono text-sm border rounded">
-              <span className="overflow-x-auto">{workspace.inviteLink}</span>
+              <span className="overflow-x-auto">{branch.inviteLink}</span>
               <CopyToClipboard
                 onCopy={copyToClipboard}
-                text={workspace.inviteLink}
+                text={branch.inviteLink}
               >
                 <DocumentDuplicateIcon className="w-5 h-5 cursor-pointer hover:text-blue-600" />
               </CopyToClipboard>
@@ -213,147 +209,143 @@ const Team = ({ isTeamOwner, workspace }) => {
             </Card.Footer>
           </Card>
         )}
-      </Content.Container>
-      <Content.Divider thick />
-      <Content.Title
-        title={t("settings.team.members")}
-        subtitle={t("settings.team.pending.invites")}
-      />
-      <Content.Divider />
-      <Content.Container>
-        <Card>
-          <Card.Body title="Manage Team Members">
-            <table className="table-fixed">
-              <thead className="text-gray-400 border-b">
-                <tr>
-                  <th className="py-3 text-left">Member Name</th>
-                  <th className="text-right" />
-                </tr>
-              </thead>
-              <tbody className="text-sm">
-                {!isLoading ? (
-                  data?.members.map((member, index) => (
-                    <tr key={index}>
-                      <td className="py-5">
-                        <div className="flex flex-row items-center justify-start space-x-3">
-                          <div className="flex flex-col">
-                            <h3 className="font-bold">{member.member.name}</h3>
-                            <h4 className="text-gray-400">{member.email}</h4>
+        {/* Seção de Membros */}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">{t("settings.team.members")}</h2>
+          <p className="text-gray-500 mb-4">{t("settings.team.pending.invites")}</p>
+          <Card>
+            <Card.Body title="Manage Team Members">
+              <table className="table-fixed">
+                <thead className="text-gray-400 border-b">
+                  <tr>
+                    <th className="py-3 text-left">Member Name</th>
+                    <th className="text-right" />
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {!isLoading ? (
+                    data?.members.map((member, index) => (
+                      <tr key={index}>
+                        <td className="py-5">
+                          <div className="flex flex-row items-center justify-start space-x-3">
+                            <div className="flex flex-col">
+                              <h3 className="font-bold">{member.member.name}</h3>
+                              <h4 className="text-gray-400">{member.email}</h4>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-3">
-                        <div className="flex flex-row items-center justify-end space-x-3">
-                          <span
-                            className={[
-                              'font-mono text-xs px-2 py-0.5 rounded-full capitalize',
-                              member.status === InvitationStatus.ACCEPTED
-                                ? 'bg-green-200 text-green-600'
-                                : member.status === InvitationStatus.PENDING
-                                ? 'bg-blue-200 text-blue-600'
-                                : 'bg-red-200 text-red-600',
-                            ].join(' ')}
-                          >
-                            {member.status.toLowerCase()}
-                          </span>
-                          <h4 className="capitalize">
-                            {member.teamRole.toLowerCase()}
-                          </h4>
-                          {workspace?.creator.email !== member.email &&
-                            isTeamOwner && (
-                              <Menu
-                                as="div"
-                                className="relative inline-block text-left"
-                              >
-                                <div>
-                                  <Menu.Button className="flex items-center justify-center p-3 space-x-3 rounded hover:bg-gray-100">
-                                    <EllipsisVerticalIcon className="w-5 h-5" />
-                                  </Menu.Button>
-                                </div>
-                                <Transition
-                                  as={Fragment}
-                                  enter="transition ease-out duration-100"
-                                  enterFrom="transform opacity-0 scale-95"
-                                  enterTo="transform opacity-100 scale-100"
-                                  leave="transition ease-in duration-75"
-                                  leaveFrom="transform opacity-100 scale-100"
-                                  leaveTo="transform opacity-0 scale-95"
+                        </td>
+                        <td className="py-3">
+                          <div className="flex flex-row items-center justify-end space-x-3">
+                            <span
+                              className={[
+                                'font-mono text-xs px-2 py-0.5 rounded-full capitalize',
+                                member.status === InvitationStatus.ACCEPTED
+                                  ? 'bg-green-200 text-green-600'
+                                  : member.status === InvitationStatus.PENDING
+                                    ? 'bg-blue-200 text-blue-600'
+                                    : 'bg-red-200 text-red-600',
+                              ].join(' ')}
+                            >
+                              {member.status.toLowerCase()}
+                            </span>
+                            <h4 className="capitalize">
+                              {member.teamRole.toLowerCase()}
+                            </h4>
+                            {branch?.creator?.email !== member.email &&
+                              isTeamOwner && (
+                                <Menu
+                                  as="div"
+                                  className="relative inline-block text-left"
                                 >
-                                  <Menu.Items className="absolute right-0 z-20 mt-2 origin-top-right bg-white border divide-y divide-gray-100 rounded w-60">
-                                    <div className="p-2">
-                                      <Menu.Item>
-                                        <button
-                                          className="flex items-center w-full px-2 py-2 space-x-2 text-sm text-gray-800 rounded hover:bg-blue-600 hover:text-white"
-                                          onClick={() => changeRole(member.id)}
-                                        >
-                                          <span>
-                                            Change role to &quot;
-                                            {member.teamRole === TeamRole.MEMBER
-                                              ? TeamRole.OWNER
-                                              : TeamRole.MEMBER}
-                                            &quot;
-                                          </span>
-                                        </button>
-                                      </Menu.Item>
-                                      <Menu.Item>
-                                        <button
-                                          className="flex items-center w-full px-2 py-2 space-x-2 text-sm text-red-600 rounded hover:bg-red-600 hover:text-white"
-                                          onClick={() =>
-                                            removeMember(member.id)
-                                          }
-                                        >
-                                          <span>Remove Team Member</span>
-                                        </button>
-                                      </Menu.Item>
-                                    </div>
-                                  </Menu.Items>
-                                </Transition>
-                              </Menu>
-                            )}
-                        </div>
+                                  <div>
+                                    <Menu.Button className="flex items-center justify-center p-3 space-x-3 rounded hover:bg-gray-100">
+                                      <EllipsisVerticalIcon className="w-5 h-5" />
+                                    </Menu.Button>
+                                  </div>
+                                  <Transition
+                                    as={Fragment}
+                                    enter="transition ease-out duration-100"
+                                    enterFrom="transform opacity-0 scale-95"
+                                    enterTo="transform opacity-100 scale-100"
+                                    leave="transition ease-in duration-75"
+                                    leaveFrom="transform opacity-100 scale-100"
+                                    leaveTo="transform opacity-0 scale-95"
+                                  >
+                                    <Menu.Items className="absolute right-0 z-20 mt-2 origin-top-right bg-white border divide-y divide-gray-100 rounded w-60">
+                                      <div className="p-2">
+                                        <Menu.Item>
+                                          <button
+                                            className="flex items-center w-full px-2 py-2 space-x-2 text-sm text-gray-800 rounded hover:bg-blue-600 hover:text-white"
+                                            onClick={() => changeRole(member.id)}
+                                          >
+                                            <span>
+                                              Change role to &quot;
+                                              {member.teamRole === TeamRole.MEMBER
+                                                ? TeamRole.OWNER
+                                                : TeamRole.MEMBER}
+                                              &quot;
+                                            </span>
+                                          </button>
+                                        </Menu.Item>
+                                        <Menu.Item>
+                                          <button
+                                            className="flex items-center w-full px-2 py-2 space-x-2 text-sm text-red-600 rounded hover:bg-red-600 hover:text-white"
+                                            onClick={() =>
+                                              removeMember(member.id)
+                                            }
+                                          >
+                                            <span>Remove Team Member</span>
+                                          </button>
+                                        </Menu.Item>
+                                      </div>
+                                    </Menu.Items>
+                                  </Transition>
+                                </Menu>
+                              )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={2}>
+                        <div className="w-full h-8 bg-gray-400 rounded animate-pulse" />
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={2}>
-                      <div className="w-full h-8 bg-gray-400 rounded animate-pulse" />
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </Card.Body>
-        </Card>
-      </Content.Container>
-    </AccountLayout>
+                  )}
+                </tbody>
+              </table>
+            </Card.Body>
+          </Card>
+        </div>
+      </div>
+    </AdminHorizontalLayout>
   );
 };
 
 export const getServerSideProps = async (context) => {
   const session = await getSession(context);
   let isTeamOwner = false;
-  let workspace = null;
+  let branch = null;
 
   if (session) {
-    workspace = await getWorkspace(
+    branch = await getBranch(
       session.user.userId,
       session.user.email,
-      context.params.workspaceSlug
+      context.params.branchSlug
     );
 
-    if (workspace) {
-      isTeamOwner = isWorkspaceOwner(session.user.email, workspace);
-      workspace.inviteLink = `${
-        process.env.APP_URL
-      }/teams/invite?code=${encodeURI(workspace.inviteCode)}`;
+    if (branch) {
+      isTeamOwner = isBranchOwner(session.user.email, branch);
+      branch.inviteLink = `${process.env.APP_URL
+        }/teams/invite?code=${encodeURI(branch.inviteCode)}`;
     }
   }
 
   return {
     props: {
       isTeamOwner,
-      workspace,
+      branch,
     },
   };
 };
