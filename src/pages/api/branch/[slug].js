@@ -48,11 +48,11 @@ const handler = async (req, res) => {
             latitude,
             longitude,
             logoUrl,
-            idBranch,
         } = req.body;
 
         try {
             // Monta objeto apenas com campos que foram enviados
+            // Nota: idBranch é gerado automaticamente e não pode ser editado
             const updateData = {};
 
             if (name !== undefined) updateData.name = name;
@@ -75,7 +75,6 @@ const handler = async (req, res) => {
             // Campos numéricos
             if (latitude !== undefined) updateData.latitude = latitude ? parseFloat(latitude) : null;
             if (longitude !== undefined) updateData.longitude = longitude ? parseFloat(longitude) : null;
-            if (idBranch !== undefined) updateData.idBranch = idBranch ? parseInt(idBranch) : null;
 
             const branch = await updateBranch(
                 session.user.userId,

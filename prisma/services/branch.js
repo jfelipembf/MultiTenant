@@ -11,6 +11,16 @@ export const countBranches = async (slug) =>
 // Dias de trial gratuito
 const TRIAL_DAYS = 14;
 
+// Gera o próximo idBranch sequencial
+const getNextIdBranch = async () => {
+    const lastBranch = await prisma.branch.findFirst({
+        where: { idBranch: { not: null } },
+        orderBy: { idBranch: 'desc' },
+        select: { idBranch: true },
+    });
+    return (lastBranch?.idBranch || 0) + 1;
+};
+
 export const createBranch = async (creatorId, email, name, slug, data = {}) => {
     const count = await countBranches(slug);
 
@@ -21,6 +31,9 @@ export const createBranch = async (creatorId, email, name, slug, data = {}) => {
     // Calcula data de fim do trial
     const trialEndsAt = new Date();
     trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
+
+    // Gera idBranch sequencial
+    const idBranch = await getNextIdBranch();
 
     const branch = await prisma.branch.create({
         data: {
@@ -35,6 +48,7 @@ export const createBranch = async (creatorId, email, name, slug, data = {}) => {
             },
             name,
             slug,
+            idBranch,
             subscriptionStatus: 'TRIAL',
             trialEndsAt,
             ...data,

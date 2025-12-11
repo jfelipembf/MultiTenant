@@ -35,6 +35,12 @@ const planLabels = {
   ENTERPRISE: 'Empresarial',
 };
 
+// Formata o ID da academia como 0001, 0002, etc.
+const formatIdBranch = (id) => {
+  if (!id) return '-';
+  return String(id).padStart(4, '0');
+};
+
 const BranchDashboard = ({ branch: branchData }) => {
   const { branch, setBranch } = useBranch();
   const [isEditing, setIsEditing] = useState(false);
@@ -92,23 +98,6 @@ const BranchDashboard = ({ branch: branchData }) => {
   };
 
   if (!currentBranch) return null;
-
-  const InfoField = ({ label, name, value, type = 'text', editable = true }) => (
-    <div className="flex flex-col space-y-1">
-      <label className="text-xs font-medium text-gray-500 uppercase">{label}</label>
-      {isEditing && editable ? (
-        <input
-          type={type}
-          name={name}
-          value={formData[name] || ''}
-          onChange={handleChange}
-          className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-      ) : (
-        <span className="text-gray-900">{value || '-'}</span>
-      )}
-    </div>
-  );
 
   return (
     <AccountLayout>
@@ -200,15 +189,94 @@ const BranchDashboard = ({ branch: branchData }) => {
         <Card>
           <Card.Body title="Dados da Academia" subtitle="Informações cadastrais">
             <div className="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2 lg:grid-cols-3">
-              <InfoField label="Nome" name="name" value={currentBranch?.name} />
-              <InfoField label="Nome Interno" name="internalName" value={currentBranch?.internalName} />
-              <InfoField label="CNPJ" name="cnpj" value={currentBranch?.cnpj} />
-              <InfoField label="Email" name="email" value={currentBranch?.email} type="email" />
-              <InfoField label="Telefone" name="telephone" value={currentBranch?.telephone} />
-              <InfoField label="WhatsApp" name="whatsapp" value={currentBranch?.whatsapp} />
-              <InfoField label="Website" name="website" value={currentBranch?.website} />
-              <InfoField label="Slug" name="slug" value={currentBranch?.slug} editable={false} />
-              <InfoField label="ID da Academia" name="idBranch" value={currentBranch?.idBranch} type="number" />
+              {/* ID da Academia - Gerado automaticamente */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">ID da Academia</label>
+                <span className="text-gray-900 font-mono">{formatIdBranch(currentBranch?.idBranch)}</span>
+              </div>
+
+              {/* Nome */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">Nome</label>
+                {isEditing ? (
+                  <input type="text" name="name" value={formData.name || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.name || '-'}</span>
+                )}
+              </div>
+
+              {/* Nome Interno */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">Nome Interno</label>
+                {isEditing ? (
+                  <input type="text" name="internalName" value={formData.internalName || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.internalName || '-'}</span>
+                )}
+              </div>
+
+              {/* CNPJ */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">CNPJ</label>
+                {isEditing ? (
+                  <input type="text" name="cnpj" value={formData.cnpj || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.cnpj || '-'}</span>
+                )}
+              </div>
+
+              {/* Email */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">Email</label>
+                {isEditing ? (
+                  <input type="email" name="email" value={formData.email || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.email || '-'}</span>
+                )}
+              </div>
+
+              {/* Telefone */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">Telefone</label>
+                {isEditing ? (
+                  <input type="text" name="telephone" value={formData.telephone || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.telephone || '-'}</span>
+                )}
+              </div>
+
+              {/* WhatsApp */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">WhatsApp</label>
+                {isEditing ? (
+                  <input type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.whatsapp || '-'}</span>
+                )}
+              </div>
+
+              {/* Website */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">Website</label>
+                {isEditing ? (
+                  <input type="text" name="website" value={formData.website || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.website || '-'}</span>
+                )}
+              </div>
+
+              {/* Slug - Não editável */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">Slug</label>
+                <span className="text-gray-900">{currentBranch?.slug || '-'}</span>
+              </div>
             </div>
           </Card.Body>
         </Card>
@@ -217,14 +285,93 @@ const BranchDashboard = ({ branch: branchData }) => {
         <Card className="mt-4">
           <Card.Body title="Endereço" subtitle="Localização da academia">
             <div className="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2 lg:grid-cols-3">
-              <InfoField label="CEP" name="zipCode" value={currentBranch?.zipCode} />
-              <InfoField label="Endereço" name="address" value={currentBranch?.address} />
-              <InfoField label="Número" name="number" value={currentBranch?.number} />
-              <InfoField label="Complemento" name="complement" value={currentBranch?.complement} />
-              <InfoField label="Bairro" name="neighborhood" value={currentBranch?.neighborhood} />
-              <InfoField label="Cidade" name="city" value={currentBranch?.city} />
-              <InfoField label="Estado" name="state" value={currentBranch?.state} />
-              <InfoField label="UF" name="stateShort" value={currentBranch?.stateShort} />
+              {/* CEP */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">CEP</label>
+                {isEditing ? (
+                  <input type="text" name="zipCode" value={formData.zipCode || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.zipCode || '-'}</span>
+                )}
+              </div>
+
+              {/* Endereço */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">Endereço</label>
+                {isEditing ? (
+                  <input type="text" name="address" value={formData.address || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.address || '-'}</span>
+                )}
+              </div>
+
+              {/* Número */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">Número</label>
+                {isEditing ? (
+                  <input type="text" name="number" value={formData.number || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.number || '-'}</span>
+                )}
+              </div>
+
+              {/* Complemento */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">Complemento</label>
+                {isEditing ? (
+                  <input type="text" name="complement" value={formData.complement || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.complement || '-'}</span>
+                )}
+              </div>
+
+              {/* Bairro */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">Bairro</label>
+                {isEditing ? (
+                  <input type="text" name="neighborhood" value={formData.neighborhood || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.neighborhood || '-'}</span>
+                )}
+              </div>
+
+              {/* Cidade */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">Cidade</label>
+                {isEditing ? (
+                  <input type="text" name="city" value={formData.city || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.city || '-'}</span>
+                )}
+              </div>
+
+              {/* Estado */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">Estado</label>
+                {isEditing ? (
+                  <input type="text" name="state" value={formData.state || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.state || '-'}</span>
+                )}
+              </div>
+
+              {/* UF */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase">UF</label>
+                {isEditing ? (
+                  <input type="text" name="stateShort" value={formData.stateShort || ''} onChange={handleChange}
+                    className="px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxLength={2} />
+                ) : (
+                  <span className="text-gray-900">{currentBranch?.stateShort || '-'}</span>
+                )}
+              </div>
             </div>
           </Card.Body>
         </Card>
