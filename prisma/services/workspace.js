@@ -39,12 +39,20 @@ export const createWorkspace = async (creatorId, email, name, slug) => {
       slug,
     },
   });
-  await sendMail({
-    html: createHtml({ code: workspace.inviteCode, name }),
-    subject: `[Nextacular] Workspace created: ${name}`,
-    text: createText({ code: workspace.inviteCode, name }),
-    to: email,
-  });
+
+  // Envio de email opcional - não falha se email não estiver configurado
+  try {
+    await sendMail({
+      html: createHtml({ code: workspace.inviteCode, name }),
+      subject: `[Painel Swim] Workspace criado: ${name}`,
+      text: createText({ code: workspace.inviteCode, name }),
+      to: email,
+    });
+  } catch (error) {
+    console.log('Email não enviado (configuração de email ausente):', error.message);
+  }
+
+  return workspace;
 };
 
 export const deleteWorkspace = async (id, email, slug) => {
@@ -115,13 +123,13 @@ export const getSiteWorkspace = async (slug, customDomain) =>
         { slug },
         customDomain
           ? {
-              domains: {
-                some: {
-                  name: slug,
-                  deletedAt: null,
-                },
+            domains: {
+              some: {
+                name: slug,
+                deletedAt: null,
               },
-            }
+            },
+          }
           : undefined,
       ],
       AND: { deletedAt: null },
